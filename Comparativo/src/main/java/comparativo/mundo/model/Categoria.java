@@ -49,6 +49,10 @@ public class Categoria {
 		}
 		return respuesta;
 	}
+
+	public String toString(){
+		return getNombre();
+	}
 	
 	
 }

@@ -2,15 +2,18 @@ package comparativo.mundo;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Properties;
 
 import comparativo.mundo.model.Catalogo;
@@ -26,7 +29,10 @@ import jakarta.ws.rs.core.MediaType;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -34,7 +40,6 @@ import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
-import org.postgresql.ds.PGSimpleDataSource;
 
 import com.google.gson.Gson;
 
@@ -64,6 +69,73 @@ public class ComparativoMundo {
 		this.connection = conexionDb(user, password, uri);
 	}
 
+	public void exportarCsv(String path) throws IOException{
+		Workbook workbook = new XSSFWorkbook();
+		Sheet sheet = workbook.createSheet("listaComparaciones");
+		int rowNum = 0;
+		Row row = sheet.createRow(rowNum);
+		row.createCell(0).setCellValue("Nombre");
+		row.createCell(1).setCellValue("Codigo Promos");
+		row.createCell(2).setCellValue("Descuento Promos");
+		row.createCell(3).setCellValue("Codigo Competencia");
+		row.createCell(4).setCellValue("Descuento Competencia");
+		row.createCell(5).setCellValue("Precio promos");
+		row.createCell(6).setCellValue("Precio promos sin descuento");
+		row.createCell(7).setCellValue("Precio competencia");
+		row.createCell(8).setCellValue("Precio competencia sin descuento");
+		CellStyle green = workbook.createCellStyle();
+		green.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+		green.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		CellStyle red = workbook.createCellStyle();
+		red.setFillForegroundColor(IndexedColors.RED.getIndex());
+		red.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		rowNum++;
+
+		for(int i = 0 ; i<listaComparaciones.getListaComparaciones().size(); i++){
+			Comparacion comparacion = listaComparaciones.getListaComparaciones().get(i);
+			row=sheet.createRow(rowNum++);
+			row.createCell(0).setCellValue(comparacion.getProductoPropio().getNombre());
+			row.createCell(1).setCellValue(comparacion.getProductoPropio().getReferencia());
+			row.createCell(2).setCellValue(comparacion.getProductoPropio().getDescuento());
+			row.createCell(3).setCellValue(comparacion.getProductoCompetencia().getCodigoHijo());
+			row.createCell(4).setCellValue(comparacion.getProductoCompetencia().getDescuento());
+			if(comparacion.getProductoPropio().getPrecio1()>comparacion.getProductoCompetencia().getPrecioBase()){
+				Cell precioPropio=row.createCell(5);
+				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecio1());
+				precioPropio.setCellStyle(red);
+				Cell precioCompetencia=row.createCell(7);
+				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioBase());
+				precioCompetencia.setCellStyle(green);
+			}else{
+				Cell precioPropio=row.createCell(5);
+				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecio1());
+				precioPropio.setCellStyle(green);
+				Cell precioCompetencia=row.createCell(7);
+				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioBase());
+				precioCompetencia.setCellStyle(red);
+			}
+			if(comparacion.getProductoPropio().getPrecioDescuento()>comparacion.getProductoCompetencia().getPrecioDescuento()){
+				Cell precioPropio=row.createCell(6);
+				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento());
+				precioPropio.setCellStyle(red);
+				Cell precioCompetencia=row.createCell(8);
+				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento());
+				precioCompetencia.setCellStyle(green);
+			}else{
+				Cell precioPropio=row.createCell(6);
+				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento());
+				precioPropio.setCellStyle(green);
+				Cell precioCompetencia=row.createCell(8);
+				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento());
+				precioCompetencia.setCellStyle(red);
+			}			
+		}
+		FileOutputStream out = new FileOutputStream(new File(path+".xlsx"));
+		workbook.write(out);
+		workbook.close();
+		out.close();
+	}
+
 	public Connection conexionDb(String user, String password, String uri) throws SQLException{
 		String url = "jdbc:postgresql://"+uri+"/comparativo";
 		Properties props = new Properties();
@@ -90,7 +162,6 @@ public class ComparativoMundo {
 		String nombrePropio;
 		String codigoPadreCompetencia;
 		String nombreCompetencia;
-
 		
 		while(rs.next()){
 			referenciaPropio = (String) rs.getObject(1);
@@ -110,31 +181,31 @@ public class ComparativoMundo {
 		
 	}
 
-	public boolean crearComparacion(Producto productoPropio, ProductoCompetencia productoCompetencia, Date pFecha) throws SQLException{
+	public boolean crearComparacion(Producto productoPropio, ProductoCompetencia productoCompetencia, String pFecha) throws SQLException, ParseException{
 		if(productoPropio==null || productoCompetencia == null){
 			return false;
 		}else{
 			PreparedStatement ps = connection.prepareStatement("INSERT INTO productos_propios(referencia,nombre) "+
-			"SELECT * FROM (SELECT '?' AS referencia, '?' AS nombre) AS temp "+
+			"SELECT * FROM (SELECT ? AS referencia, ? AS nombre) AS temp "+
 			"WHERE NOT EXISTS ( "+
-				"SELECT referencia FROM productos_propios WHERE customer_name = ? "+
+				"SELECT referencia FROM productos_propios WHERE referencia = ?"+
 			") LIMIT 1");
 			ps.setString(1, productoPropio.getReferencia());
 			ps.setString(2, productoPropio.getNombre());
 			ps.setString(3, productoPropio.getReferencia());
 			PreparedStatement ps2 = connection.prepareStatement("INSERT INTO productos_competencia(codigo_hijo,codigo_padre,nombre) "+
-			"SELECT * FROM (SELECT '?' AS codigo_hijo, '?' as codigo_padre, '?' AS nombre) AS temp "+
+			"SELECT * FROM (SELECT ? AS codigo_hijo, ? as codigo_padre, ? AS nombre) AS temp "+
 			"WHERE NOT EXISTS ( "+
-			"SELECT referencia FROM productos_competencia WHERE codigo_hijo = ? "+
+			"SELECT codigo_hijo FROM productos_competencia WHERE codigo_hijo = ?"+
 			") LIMIT 1");
 			ps2.setString(1, productoCompetencia.getCodigoHijo());
 			ps2.setString(2, productoCompetencia.getCodigoPadre());
 			ps2.setString(3, productoCompetencia.getNombre());
 			ps2.setString(4, productoCompetencia.getCodigoHijo());
 			PreparedStatement ps3 = connection.prepareStatement("INSERT INTO comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia) "+
-			"SELECT * FROM (SELECT '?' AS referencia_propio, '?' as referencia_competencia, TO_DATE('?','yyyy-MM') AS fecha_comparacion, '?' as precio_propio, '?' as descuento_propio, '?' as precio_competencia, '?' as descuento_competencia) AS temp "+
+			"SELECT * FROM (SELECT ? AS referencia_propio, ? as referencia_competencia, TO_DATE(?,'yyyy-MM') AS fecha_comparacion, ? as precio_propio, ? as descuento_propio, ? as precio_competencia, ? as descuento_competencia) AS temp "+
 			"WHERE NOT EXISTS ( "+
-			"SELECT referencia FROM productos_competencia WHERE referencia_pripio = ? and referencia_competencia = ? and fecha_comparacion = TO_DATE('?','yyyy-MM') "+
+			"SELECT referencia_propio, referencia_competencia, fecha_comparacion FROM comparaciones WHERE referencia_propio = ? and referencia_competencia = ? and fecha_comparacion = TO_DATE(?,'yyyy-MM') "+
 			") LIMIT 1");
 			ps3.setString(1, productoPropio.getReferencia());
 			ps3.setString(2, productoCompetencia.getCodigoHijo());
@@ -145,26 +216,52 @@ public class ComparativoMundo {
 			ps3.setDouble(7, productoCompetencia.getDescuento());
 			ps3.setString(8, productoPropio.getReferencia());
 			ps3.setString(9, productoCompetencia.getCodigoHijo());
+			ps3.setString(10, pFecha);
 
-			ps.executeQuery();
-			ps2.executeQuery();
+			ps.executeUpdate();
+			ps2.executeUpdate();
 			int rs3 = ps3.executeUpdate();
 			if(rs3>0){
-				listaComparaciones.agregarComparacion(productoPropio, productoCompetencia, pFecha);
 				return true;
 			}
 			else{
+				listaComparaciones.agregarComparacion(productoPropio, productoCompetencia, new SimpleDateFormat("yyyy-MM").parse(pFecha));
 				return false;
 			}
 
 		}
 	}
 
-	public boolean eliminarComparacion(Comparacion comparacion){
-		return listaComparaciones.eliminarComparacion(comparacion);
+	public boolean eliminarComparacion(Comparacion comparacion) throws SQLException{
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM");  
+		String pFecha = dateFormat.format(comparacion.getFechaComparacion()); 
+
+		connection.setAutoCommit(false);
+		PreparedStatement ps = connection.prepareStatement("DELETE FROM comparaciones "+
+			"WHERE referencia_propio = ? AND referencia_competencia = ? and fecha_comparacion = TO_DATE(?,'yyyy-MM')");
+			
+			ps.setString(1, comparacion.getProductoPropio().getReferencia());
+			ps.setString(2, comparacion.getProductoCompetencia().getCodigoHijo());
+			ps.setString(3, pFecha);
+			int response = ps.executeUpdate();
+			if(response>0){
+				boolean eliminacion=listaComparaciones.eliminarComparacion(comparacion);
+				if(eliminacion){
+					connection.commit();
+					connection.setAutoCommit(true);
+					return true;
+				}else{
+					connection.rollback();
+					return false;
+				}
+			}
+			else{
+				connection.setAutoCommit(true);
+				return false;
+			}
 	}
 
-	public ListaComparaciones getListaComparaciones(){
+	public ListaComparaciones obtenerListaComparaciones(){
 		return listaComparaciones;
 	}
 	
@@ -255,7 +352,7 @@ public class ComparativoMundo {
 		return listaCompetencia;
 	}
 
-	public ArrayList<ProductoCompetencia> getCatalogoCompetencia(){
+	public ArrayList<ProductoCompetencia> obtenerCatalogoCompetencia(){
 		return catalogoCompetencia;
 	}
 
@@ -277,8 +374,12 @@ public class ComparativoMundo {
 		}
 	}
 	
-	public Catalogo getCatalogoPropio(){
+	public Catalogo obtenerCatalogoPropio(){
 		return catalogoPropio;
+	}
+
+	public Categoria obtenerCategoriaPorIndice(int indice){
+		return catalogoPropio.getCatalogo().get(indice);
 	}
 
 }

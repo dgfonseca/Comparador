@@ -10,6 +10,15 @@ public class ProductoCompetencia {
 
     
 
+    public ProductoCompetencia(String pCodigoHijo, String pCodigoPadre, String nombre, double precioBase){
+        super();
+        this.codigoHijo=pCodigoHijo;
+        this.codigoPadre=pCodigoPadre;
+        this.nombre=nombre;
+        this.precioBase=precioBase;
+        this.descuento=25;
+    }
+
     public ProductoCompetencia(String pCodigoHijo, String pCodigoPadre, String nombre, double precioBase, double pDescuento){
         super();
         this.codigoHijo=pCodigoHijo;
@@ -62,6 +71,10 @@ public class ProductoCompetencia {
     public double getPrecioDescuento() {
 		return precioBase*(1-(descuento/100));
 	}
+
+    public String toString(){
+        return getCodigoHijo()+"     --     "+getNombre();
+    }
 
     
 

@@ -58,6 +58,10 @@ public class Producto {
 	public void setDescuento(double descuento) {
 		this.descuento = descuento;
 	}
+
+	public String toString(){
+		return getReferencia()+"     --     "+getNombre();
+	}
 	
 
 }
