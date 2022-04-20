@@ -15,13 +15,6 @@ public class Producto {
 		this.descuento=35;
 	}
 	
-	public Producto(String pNombre, String pReferencia, double pPrecio, double pDescuento) {
-		super();
-		this.nombre=pNombre;
-		this.referencia=pReferencia;
-		this.precio1=pPrecio;
-		this.descuento=pDescuento;
-	}
 
 	public String getNombre() {
 		return nombre;

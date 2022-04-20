@@ -29,7 +29,6 @@ public class PanelListaProductosCompetencia extends JPanel implements ListSelect
         listaProductos = new JList<>();
         listaProductos.addListSelectionListener(this);
         scroll = new JScrollPane(listaProductos);
-        scroll.setPreferredSize(new Dimension(250,180));
         add(scroll,BorderLayout.CENTER);
 
         JPanel p1 = new JPanel(new GridLayout(2,1));
@@ -62,7 +61,7 @@ public class PanelListaProductosCompetencia extends JPanel implements ListSelect
 
     public void filterModel(DefaultListModel<ProductoCompetencia> model, String filter) {
         for (ProductoCompetencia s : interfaz.obtenerProductosCompetencia()) {
-            if (!s.getCodigoHijo().toLowerCase().contains(filter.toLowerCase()) && !s.getCodigoHijo().toLowerCase().contains(filter.toLowerCase())) {
+            if (!s.getCodigoHijo().toLowerCase().contains(filter.toLowerCase()) && !s.getNombre().toLowerCase().contains(filter.toLowerCase())) {
                 if (model.contains(s)) {
                     model.removeElement(s);
                 }

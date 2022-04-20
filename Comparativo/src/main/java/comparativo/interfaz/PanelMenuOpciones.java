@@ -4,9 +4,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import java.awt.*;
@@ -17,8 +14,8 @@ public class PanelMenuOpciones extends JPanel implements ActionListener{
 
     private InterfazComparativo ventanaPrincipal;
     private JButton botonProductosCompetencia;
+    private JButton botonProductos;
     private JButton botonComparaciones;
-    private JButton botonHistoricoComparaciones;
     
     public PanelMenuOpciones(InterfazComparativo pVentanaPrincipal){
         this.ventanaPrincipal=pVentanaPrincipal;
@@ -31,15 +28,16 @@ public class PanelMenuOpciones extends JPanel implements ActionListener{
         botonProductosCompetencia.addActionListener(this);
         add(botonProductosCompetencia);
 
+        botonProductos = new JButton("Seleccionar Productos");
+        botonProductos.setActionCommand("C");
+        botonProductos.addActionListener(this);
+        add(botonProductos);
+
         botonComparaciones = new JButton("Comparaciones");
         botonComparaciones.setActionCommand("B");
         botonComparaciones.addActionListener(this);
         add(botonComparaciones);
 
-        botonHistoricoComparaciones = new JButton("Historico Comparaciones");
-        botonHistoricoComparaciones.setActionCommand("C");
-        botonHistoricoComparaciones.addActionListener(this);
-        add(botonHistoricoComparaciones);
 
 
 
@@ -62,6 +60,13 @@ public class PanelMenuOpciones extends JPanel implements ActionListener{
                 ventanaPrincipal.cargarProductosCompetencia(path);
                 
             }
+        }
+        if("B".equals(e.getActionCommand())){
+            ventanaPrincipal.cambiarPanelComparaciones();
+        }
+        if("C".equals(e.getActionCommand())){
+            ventanaPrincipal.cambiarPanelProductos();
+            ventanaPrincipal.obtenerCategorias();
         }
         
         

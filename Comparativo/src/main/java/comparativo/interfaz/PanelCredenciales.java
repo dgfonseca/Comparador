@@ -1,8 +1,8 @@
 package comparativo.interfaz;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -11,6 +11,7 @@ import javax.swing.SwingConstants;
 
 import java.awt.*;
 import java.awt.event.*;
+
 
 public class PanelCredenciales extends JDialog{
 
@@ -30,6 +31,7 @@ public class PanelCredenciales extends JDialog{
         this(true,null);
     }
     public PanelCredenciales( boolean modal, final InterfazComparativo pInterfaz){
+        setIconImage(new ImageIcon(getClass().getResource("Imagenes/Logo.jpg")).getImage());
         tfUri.setText("127.0.0.1");
         tfUsuario.setText("postgres");
         tfPassword.setText("santafe");
@@ -75,15 +77,13 @@ public class PanelCredenciales extends JDialog{
         botonConectar.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e){
-
-                if(interfaz.inicializarConexion(tfUri.getText(), tfUsuario.getText(),String.valueOf(tfPassword.getPassword()))){
-                    pInterfaz.setVisible(true);
-                    setVisible(false);
-                }
-                else{
-                    status.setText("Credenciales Invalidas");
-                }
-
+                    if(interfaz.inicializarConexion(tfUri.getText(), tfUsuario.getText(),String.valueOf(tfPassword.getPassword()))){
+                        pInterfaz.setVisible(true);
+                        setVisible(false);
+                    }
+                    else{
+                        status.setText("Credenciales Invalidas");
+                    }
             }
         });
 

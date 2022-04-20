@@ -6,7 +6,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.ListModel;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -80,11 +79,15 @@ public class PanelListaCategoriasPropios extends JPanel implements ListSelection
     @Override
     public void valueChanged( ListSelectionEvent e )
     {
-        int indice = listaCategorias.getSelectedIndex( );
-        if( indice != -1 )
+        Categoria indice = listaCategorias.getSelectedValue();
+        if( indice != null )
         {
-            interfaz.obtenerCategoriaPorIndice( indice );
-            interfaz.refrescarProductos();
+            interfaz.refrescarCategoriaActual( indice );
+            try{
+                interfaz.refrescarProductos();
+            }catch(NullPointerException ex){
+
+            }
         }
     }
     
