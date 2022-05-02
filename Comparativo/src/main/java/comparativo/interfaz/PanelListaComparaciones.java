@@ -19,6 +19,7 @@ import comparativo.mundo.model.ListaComparaciones;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.text.SimpleDateFormat;
 
 
 class MyTableCellRenderer extends DefaultTableCellRenderer {
@@ -51,13 +52,18 @@ public class PanelListaComparaciones extends JPanel{
         modeloTabla.addColumn("Nombre");
         modeloTabla.addColumn("Codigo Promos");
         modeloTabla.addColumn("Descuento Promos");
+        modeloTabla.addColumn("Descuento Promos 2");
         modeloTabla.addColumn("Codigo Competencia");
         modeloTabla.addColumn("Descuento Competencia");
+        modeloTabla.addColumn("Descuento Competencia 2");
         modeloTabla.addColumn("Precio Promos");
         modeloTabla.addColumn("Precio Competencia ");
         modeloTabla.addColumn("Precio Promos Descuento");
         modeloTabla.addColumn("Precio Competencia Descuento");
-
+        modeloTabla.addColumn("Precio Promos Descuento 2");
+        modeloTabla.addColumn("Precio Competencia Descuento 2");
+        modeloTabla.addColumn("Fecha");
+        
         tabla.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         tabla.setAutoCreateRowSorter(true);
         tabla.getTableHeader().setBackground(Color.lightGray);
@@ -65,7 +71,7 @@ public class PanelListaComparaciones extends JPanel{
             
             public void mouseClicked(MouseEvent event) {
                 String referencia=tabla.getValueAt(tabla.getSelectedRow(), 1).toString();
-                String codigoHijo=tabla.getValueAt(tabla.getSelectedRow(), 3).toString();
+                String codigoHijo=tabla.getValueAt(tabla.getSelectedRow(), 4).toString();
                 interfaz.actualizarComparacionSeleccionada(referencia,codigoHijo);
             }
         });
@@ -79,34 +85,6 @@ public class PanelListaComparaciones extends JPanel{
     }
 
     public void changeTable(JTable table) {
-        table.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                double precioPromos = Double.parseDouble(table.getValueAt(row, 5).toString());
-                double precioComp = Double.parseDouble(table.getValueAt(row, 6).toString());
-                if (precioPromos > precioComp) {
-                    c.setBackground(Color.RED);
-                } else {
-                    c.setBackground(Color.GREEN);
-                }
-                return c;
-            }
-        });
-        table.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                double precioPromos = Double.parseDouble(table.getValueAt(row, 5).toString());
-                double precioComp = Double.parseDouble(table.getValueAt(row, 6).toString());
-                if (precioPromos > precioComp) {
-                    c.setBackground(Color.GREEN);
-                } else {
-                    c.setBackground(Color.RED);
-                }
-                return c;
-            }
-        });
         table.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -135,8 +113,65 @@ public class PanelListaComparaciones extends JPanel{
                 return c;
             }
         });
-    }
+        table.getColumnModel().getColumn(9).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                double precioPromos = Double.parseDouble(table.getValueAt(row, 9).toString());
+                double precioComp = Double.parseDouble(table.getValueAt(row, 10).toString());
+                if (precioPromos > precioComp) {
+                    c.setBackground(Color.RED);
+                } else {
+                    c.setBackground(Color.GREEN);
+                }
+                return c;
+            }
+        });
+        table.getColumnModel().getColumn(10).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                double precioPromos = Double.parseDouble(table.getValueAt(row, 9).toString());
+                double precioComp = Double.parseDouble(table.getValueAt(row, 10).toString());
+                if (precioPromos > precioComp) {
+                    c.setBackground(Color.GREEN);
+                } else {
+                    c.setBackground(Color.RED);
+                }
+                return c;
+            }
+        });
+        table.getColumnModel().getColumn(11).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                double precioPromos = Double.parseDouble(table.getValueAt(row, 11).toString());
+                double precioComp = Double.parseDouble(table.getValueAt(row, 12).toString());
+                if (precioPromos > precioComp) {
+                    c.setBackground(Color.RED);
+                } else {
+                    c.setBackground(Color.GREEN);
+                }
+                return c;
+            }
+        });
 
+        table.getColumnModel().getColumn(12).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                double precioPromos = Double.parseDouble(table.getValueAt(row, 11).toString());
+                double precioComp = Double.parseDouble(table.getValueAt(row, 12).toString());
+                if (precioPromos > precioComp) {
+                    c.setBackground(Color.GREEN);
+                } else {
+                    c.setBackground(Color.RED);
+                }
+                return c;
+            }
+        });
+        
+    }
 
     public void refrescar(ListaComparaciones lista){
         Comparacion comp = null;
@@ -144,9 +179,10 @@ public class PanelListaComparaciones extends JPanel{
         for(int i =0; i<lista.getListaComparaciones().size();i++){
             comp=lista.getListaComparaciones().get(i);
             comp.getProductoPropio().getNombre();
-            modeloTabla.addRow(new Object[]{comp.getProductoPropio().getNombre(), comp.getProductoPropio().getReferencia(), comp.getProductoPropio().getDescuento(),
-                comp.getProductoCompetencia().getCodigoHijo(),comp.getProductoCompetencia().getDescuento(),comp.getProductoPropio().getPrecio1(), comp.getProductoCompetencia().getPrecioBase(),
-                comp.getProductoPropio().getPrecioDescuento(),comp.getProductoCompetencia().getPrecioDescuento()
+            modeloTabla.addRow(new Object[]{comp.getProductoPropio().getNombre(), comp.getProductoPropio().getReferencia(), comp.getProductoPropio().getDescuento(),comp.getProductoPropio().getDescuento2(),
+                comp.getProductoCompetencia().getCodigoHijo(),comp.getProductoCompetencia().getDescuento(),comp.getProductoCompetencia().getDescuento2(),comp.getProductoPropio().getPrecio1(), comp.getProductoCompetencia().getPrecioBase(),
+                comp.getProductoPropio().getPrecioDescuento(),comp.getProductoCompetencia().getPrecioDescuento(),comp.getProductoPropio().getPrecioDescuento2(),comp.getProductoCompetencia().getPrecioDescuento2()
+                ,new SimpleDateFormat("yyyy-MM-dd").format(comp.getFechaComparacion())
             });;
         }
         changeTable(tabla);

@@ -34,7 +34,7 @@ public class PanelCredenciales extends JDialog{
         setIconImage(new ImageIcon(getClass().getResource("Imagenes/Logo.jpg")).getImage());
         tfUri.setText("127.0.0.1");
         tfUsuario.setText("postgres");
-        tfPassword.setText("santafe");
+        tfPassword.setText("admin");
         setTitle("Credenciales Base de datos");
         interfaz = pInterfaz;
         JPanel p3 = new JPanel(new GridLayout(3,1));
@@ -86,6 +86,8 @@ public class PanelCredenciales extends JDialog{
                     }
             }
         });
+
+        
 
     }
     

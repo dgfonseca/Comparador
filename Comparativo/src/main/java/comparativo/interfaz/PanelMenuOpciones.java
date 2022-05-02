@@ -3,16 +3,20 @@ package comparativo.interfaz;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.concurrent.ExecutionException;
 
 
 public class PanelMenuOpciones extends JPanel implements ActionListener{
 
-    private InterfazComparativo ventanaPrincipal;
+    private static InterfazComparativo ventanaPrincipal;
     private JButton botonProductosCompetencia;
     private JButton botonProductos;
     private JButton botonComparaciones;
@@ -43,6 +47,30 @@ public class PanelMenuOpciones extends JPanel implements ActionListener{
 
     }
 
+    private static void backgroundLoad(String path){
+        final String ppath = path;
+
+        SwingWorker sw1 = new SwingWorker() {
+
+            @Override
+            protected String doInBackground() throws Exception {
+                ventanaPrincipal.cargarProductosCompetencia(ppath);
+                String termino = "Termino de cargar los productos";
+                return termino;
+            }
+
+            @Override
+            protected void done(){
+                try {
+                    JOptionPane.showMessageDialog(new JFrame(), get(), "Informacion", JOptionPane.INFORMATION_MESSAGE);
+                } catch (InterruptedException | ExecutionException e) {
+                    JOptionPane.showMessageDialog(new JFrame(), "Error al cargar excel", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        sw1.execute();
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
 
@@ -57,8 +85,7 @@ public class PanelMenuOpciones extends JPanel implements ActionListener{
             if( resultado == JFileChooser.APPROVE_OPTION )
             {
                 String path = fc.getSelectedFile( ).getAbsolutePath( );
-                ventanaPrincipal.cargarProductosCompetencia(path);
-                
+                backgroundLoad(path);                
             }
         }
         if("B".equals(e.getActionCommand())){

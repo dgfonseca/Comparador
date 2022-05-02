@@ -1,11 +1,13 @@
 package comparativo.interfaz;
 
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
@@ -14,14 +16,17 @@ import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 
 public class PanelMenuOpcionesComparacion extends JPanel implements ActionListener{
 
-    private InterfazComparativo interfaz;
+    private static InterfazComparativo interfaz;
     private JButton bntEliminarComparacion;
     private JButton btnModificarDescuento;
     private JButton btnExportarComparaciones;
     private JButton btnCargarHistorico;
+    private JButton btnComparacionesRecientes;
+    private JButton btnExportarHistorico;
     private JFormattedTextField field;
     private JFormattedTextField field2;
     private JDialog dialog;
@@ -29,7 +34,7 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
     public PanelMenuOpcionesComparacion(InterfazComparativo pInterfaz){
         interfaz = pInterfaz;
         setBorder(BorderFactory.createLineBorder(Color.black));
-        setLayout(new GridLayout(1,4,3,3));
+        setLayout(new GridLayout(1,5,3,3));
         
         btnModificarDescuento = new JButton("Modificar Descuento");
         btnModificarDescuento.setActionCommand("MODIFICAR");
@@ -46,19 +51,27 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
         btnCargarHistorico.addActionListener(this);
         add(btnCargarHistorico);
 
-        btnExportarComparaciones = new JButton("Exportar a Excel");
+        btnComparacionesRecientes = new JButton("Comparaciones Recientes");
+        btnComparacionesRecientes.setActionCommand("COMPARACIONESR");
+        btnComparacionesRecientes.addActionListener(this);
+        add(btnComparacionesRecientes);
+
+        btnExportarComparaciones = new JButton("Exportar Recientes");
         btnExportarComparaciones.setActionCommand("EXPORTAR");
         btnExportarComparaciones.addActionListener(this);
         add(btnExportarComparaciones);
 
-
+        btnExportarHistorico = new JButton("Exportar Historico");
+        btnExportarHistorico.setActionCommand("EXPORTARH");
+        btnExportarHistorico.addActionListener(this);
+        add(btnExportarHistorico);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if("MODIFICAR".equals(e.getActionCommand())){
             dialog = new JDialog();
-            dialog.setSize(300,150);
+            dialog.setSize(450,125);
             NumberFormat numberFormat = NumberFormat.getNumberInstance(Locale.getDefault());
             DecimalFormat decimalFormat = (DecimalFormat) numberFormat;
             decimalFormat.setGroupingUsed(false);
@@ -81,8 +94,9 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
             p1.add(p3);
             p1.add(p4);
 
-            JPanel p2 = new JPanel();
+            JPanel p2 = new JPanel(new GridLayout(1,2));
             JButton boton = new JButton("Cambiar Descuentos");
+            JButton boton2 = new JButton("Cambiar Segundo Descuento");
             
             ActionListener actionListener = new ActionListener() {
                 public void actionPerformed(ActionEvent event) {
@@ -96,9 +110,24 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
                 
                 }
             };
+
+            ActionListener actionListener2 = new ActionListener() {
+                public void actionPerformed(ActionEvent event) {
+                    
+                    double descuentoPropio = field.getValue() == null ?-1:((Long) field.getValue()).doubleValue();
+                    double descuentoCompetencia = field2.getValue() == null ?-1:((Long) field2.getValue()).doubleValue();
+                    if(descuentoPropio<=100 && descuentoCompetencia <=100){
+                        interfaz.actualizarDescuentos2(descuentoPropio, descuentoCompetencia);
+                    }
+                    dialog.dispose();
+                }
+            };
             boton.setActionCommand("command");
             boton.addActionListener(actionListener);
+            boton2.setActionCommand("command2");
+            boton2.addActionListener(actionListener2);
             p2.add(boton);
+            p2.add(boton2);
 
             JPanel p5 = new JPanel(new BorderLayout());
             p5.add(p2,BorderLayout.CENTER);
@@ -108,9 +137,6 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
             dialog.setLocationRelativeTo(null);
             dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
             dialog.setVisible(true);
-
-            
-
         }
         if("EXPORTAR".equals(e.getActionCommand())){
             JFileChooser fc = new JFileChooser();
@@ -122,7 +148,20 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
             if( resultado == JFileChooser.APPROVE_OPTION )
             {
                 String path = fc.getSelectedFile( ).getAbsolutePath( );
-                interfaz.exportarComparaciones(path);
+                backgroundLoad(path,false);
+                
+            }
+        }if("EXPORTARH".equals(e.getActionCommand())){
+            JFileChooser fc = new JFileChooser();
+            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            fc.setDialogTitle( "Almacenar Archivo" );
+            fc.setMultiSelectionEnabled( false );
+
+            int resultado = fc.showOpenDialog( this );
+            if( resultado == JFileChooser.APPROVE_OPTION )
+            {
+                String path = fc.getSelectedFile( ).getAbsolutePath( );
+                backgroundLoad(path,true);
                 
             }
         }
@@ -133,9 +172,39 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
             }
         }
         if("CARGARH".equals(e.getActionCommand())){
+            interfaz.setEsHistorico(true);
             interfaz.obtenerHistoricoComparaciones();
         }
+        if("COMPARACIONESR".equals(e.getActionCommand())){
+            interfaz.setEsHistorico(false);
+            interfaz.refrescarListaComparaciones();
+        }
         
+    }
+
+    private static void backgroundLoad(String path, boolean esHistorico){
+        final String ppath = path;
+        final boolean historico = esHistorico;
+
+        SwingWorker sw1 = new SwingWorker() {
+
+            @Override
+            protected String doInBackground() throws Exception {
+                interfaz.exportarComparaciones(ppath,historico);
+                String termino = "Termino la exportacion de comparaciones";
+                return termino;
+            }
+
+            @Override
+            protected void done(){
+                try {
+                    JOptionPane.showMessageDialog(new JFrame(), get(), "Informacion", JOptionPane.INFORMATION_MESSAGE);
+                } catch (InterruptedException | ExecutionException e) {
+                    JOptionPane.showMessageDialog(new JFrame(), "Error al cargar excel", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        sw1.execute();
     }
     
 }
