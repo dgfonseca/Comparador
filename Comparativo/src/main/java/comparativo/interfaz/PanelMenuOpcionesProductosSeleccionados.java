@@ -18,6 +18,7 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
     private JButton btnBuscarProducto;
     private JTextField field;
     private JDialog dialog;
+    JButton boton;
 
     public PanelMenuOpcionesProductosSeleccionados(InterfazComparativo pinterfaz){
         interfaz=pinterfaz;
@@ -64,12 +65,13 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
             p1.add(p3);
 
             JPanel p2 = new JPanel();
-            JButton boton = new JButton("Buscar Referencia");
+            boton = new JButton("Buscar Referencia");
             
             ActionListener actionListener = new ActionListener() {
                 public void actionPerformed(ActionEvent event) {
                     
                     String referencia = field.getText();
+                    boton.setText("Buscando producto, por favor espere");
                     interfaz.buscarProductoPorReferencia(referencia);  
                     dialog.dispose();
                 }

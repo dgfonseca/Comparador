@@ -1,5 +1,14 @@
 package comparativo.interfaz;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -16,10 +25,6 @@ import javax.swing.table.TableRowSorter;
 
 import comparativo.mundo.model.Comparacion;
 import comparativo.mundo.model.ListaComparaciones;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.text.SimpleDateFormat;
 
 
 class MyTableCellRenderer extends DefaultTableCellRenderer {
@@ -72,7 +77,8 @@ public class PanelListaComparaciones extends JPanel{
             public void mouseClicked(MouseEvent event) {
                 String referencia=tabla.getValueAt(tabla.getSelectedRow(), 1).toString();
                 String codigoHijo=tabla.getValueAt(tabla.getSelectedRow(), 4).toString();
-                interfaz.actualizarComparacionSeleccionada(referencia,codigoHijo);
+                String fecha = tabla.getValueAt(tabla.getSelectedRow(), 13).toString();
+                interfaz.actualizarComparacionSeleccionada(referencia,codigoHijo,fecha);
             }
         });
         JScrollPane panelScroll = new JScrollPane( tabla );
@@ -176,14 +182,19 @@ public class PanelListaComparaciones extends JPanel{
     public void refrescar(ListaComparaciones lista){
         Comparacion comp = null;
         modeloTabla.setRowCount(0);
+        if(interfaz.getEsHistorico()){
+            this.setBorder(BorderFactory.createTitledBorder("Historico Comparaciones"));
+        }else{
+            this.setBorder(BorderFactory.createTitledBorder("Comparaciones"));
+        }
         for(int i =0; i<lista.getListaComparaciones().size();i++){
             comp=lista.getListaComparaciones().get(i);
             comp.getProductoPropio().getNombre();
             modeloTabla.addRow(new Object[]{comp.getProductoPropio().getNombre(), comp.getProductoPropio().getReferencia(), comp.getProductoPropio().getDescuento(),comp.getProductoPropio().getDescuento2(),
                 comp.getProductoCompetencia().getCodigoHijo(),comp.getProductoCompetencia().getDescuento(),comp.getProductoCompetencia().getDescuento2(),comp.getProductoPropio().getPrecio1(), comp.getProductoCompetencia().getPrecioBase(),
                 comp.getProductoPropio().getPrecioDescuento(),comp.getProductoCompetencia().getPrecioDescuento(),comp.getProductoPropio().getPrecioDescuento2(),comp.getProductoCompetencia().getPrecioDescuento2()
-                ,new SimpleDateFormat("yyyy-MM-dd").format(comp.getFechaComparacion())
-            });;
+                ,comp.getFechaComparacion()!=null? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comp.getFechaComparacion()):new SimpleDateFormat("yyyy-MM-dd").format(new Date())
+            });
         }
         changeTable(tabla);
         rowSorter = new TableRowSorter<>(tabla.getModel());

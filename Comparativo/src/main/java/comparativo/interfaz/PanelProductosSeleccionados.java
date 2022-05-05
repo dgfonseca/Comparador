@@ -104,6 +104,11 @@ public class PanelProductosSeleccionados extends JPanel {
             txtNombre.setText(propio.getNombre());
             txtCategoria.setText(categoria.getNombre());
             txtPrecio.setText(propio.getPrecio1()+"");
+        }if(propio!=null&&categoria==null) {
+        	txtReferencia.setText(propio.getReferencia());
+            txtNombre.setText(propio.getNombre());
+            txtCategoria.setText("");
+            txtPrecio.setText(propio.getPrecio1()+"");
         }
         if(competencia!=null){
             txtCodigoHijo.setText(competencia.getCodigoHijo());
