@@ -20,8 +20,8 @@ public class ListaComparaciones {
 		this.listaComparaciones = listaComparaciones;
 	}
 	
-	public Comparacion agregarComparacion(Producto productoA, ProductoCompetencia productoB, Date pFecha){
-		Comparacion nuevo = new Comparacion(productoA, productoB, pFecha);
+	public Comparacion agregarComparacion(Producto productoA, ProductoCompetencia productoB, Date pFecha, int numeroPrecio){
+		Comparacion nuevo = new Comparacion(productoA, productoB, pFecha, numeroPrecio);
 		listaComparaciones.add(nuevo);
 		return nuevo;
 	}

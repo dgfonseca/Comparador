@@ -31,11 +31,19 @@ public class PanelProductosSeleccionados extends JPanel {
     private JTextField txtNombre;
     private final JLabel etiquetaPrecio = new JLabel("Precio:");
     private JTextField txtPrecio;
+    private final JLabel etiquetaPrecio2 = new JLabel("Precio 2:");
+    private JTextField txtPrecio2;
+    private final JLabel etiquetaPrecio3 = new JLabel("Precio 3:");
+    private JTextField txtPrecio3;
+    private final JLabel etiquetaPrecio4 = new JLabel("Precio 4:");
+    private JTextField txtPrecio4;
+    private final JLabel etiquetaPrecio5 = new JLabel("Precio 5:");
+    private JTextField txtPrecio5;
 
     public PanelProductosSeleccionados(){
         setLayout(new GridLayout(1,2,1,1));
         setBorder(new TitledBorder("Productos Seleccionados"));
-        JPanel p1 = new JPanel(new GridLayout(4,2,5,5));
+        JPanel p1 = new JPanel(new GridLayout(4,4,5,5));
         p1.setBorder(new TitledBorder("Producto Propio Seleccionado"));
         txtReferencia = new JTextField("");
         txtReferencia.setEditable(false);
@@ -63,6 +71,35 @@ public class PanelProductosSeleccionados extends JPanel {
 
         p1.add(etiquetaPrecio);
         p1.add(txtPrecio);
+
+        txtPrecio2 = new JTextField("");
+        txtPrecio2.setEditable(false);
+        txtPrecio2.setBackground(Color.WHITE);
+
+        p1.add(etiquetaPrecio2);
+        p1.add(txtPrecio2);
+
+        txtPrecio3 = new JTextField("");
+        txtPrecio3.setEditable(false);
+        txtPrecio3.setBackground(Color.WHITE);
+
+        p1.add(etiquetaPrecio3);
+        p1.add(txtPrecio3);
+
+        txtPrecio4 = new JTextField("");
+        txtPrecio4.setEditable(false);
+        txtPrecio4.setBackground(Color.WHITE);
+
+        p1.add(etiquetaPrecio4);
+        p1.add(txtPrecio4);
+
+        txtPrecio5 = new JTextField("");
+        txtPrecio5.setEditable(false);
+        txtPrecio5.setBackground(Color.WHITE);
+
+        p1.add(etiquetaPrecio5);
+        p1.add(txtPrecio5);
+        
         add(p1);
 
         JPanel p2 = new JPanel(new GridLayout(4,2,5,5));
@@ -99,22 +136,20 @@ public class PanelProductosSeleccionados extends JPanel {
     }
 
     public void refrescar(Producto propio, ProductoCompetencia competencia, Categoria categoria){
-        if(propio!=null&&categoria!=null){
+        if(propio!=null){
             txtReferencia.setText(propio.getReferencia());
             txtNombre.setText(propio.getNombre());
             txtCategoria.setText(categoria.getNombre());
-            txtPrecio.setText(propio.getPrecio1()+"");
-        }if(propio!=null&&categoria==null) {
-        	txtReferencia.setText(propio.getReferencia());
-            txtNombre.setText(propio.getNombre());
-            txtCategoria.setText("");
-            txtPrecio.setText(propio.getPrecio1()+"");
-        }
-        if(competencia!=null){
+            txtPrecio.setText(propio.getPrecio1()+"$");
+            txtPrecio2.setText(propio.getPrecio2()+"$");
+            txtPrecio3.setText(propio.getPrecio3()+"$");
+            txtPrecio4.setText(propio.getPrecio4()+"$");
+            txtPrecio5.setText(propio.getPrecio5()+"$");
+        }if(competencia!=null){
             txtCodigoHijo.setText(competencia.getCodigoHijo());
             txtCodigoPadre.setText(competencia.getCodigoPadre());
             txtNombreComp.setText(competencia.getNombre());
-            txtPrecioComp.setText(competencia.getPrecioBase()+"");
+            txtPrecioComp.setText(competencia.getPrecioBase()+"$");
         }if(propio==null && competencia==null){
             txtReferencia.setText("");
             txtNombre.setText("");

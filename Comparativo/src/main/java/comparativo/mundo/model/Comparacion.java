@@ -8,15 +8,23 @@ public class Comparacion {
 	private Producto productoPropio;
 	private ProductoCompetencia productoCompetencia;
 	private Date fechaComparacion;
+	private int numeroPrecio;
 
 	
-	public Comparacion(Producto pProducto1, ProductoCompetencia pProducto2, Date pFechaComparacion){
+	public Comparacion(Producto pProducto1, ProductoCompetencia pProducto2, Date pFechaComparacion, int pNumeroPrecio){
 		super();
 		this.productoPropio = Objects.requireNonNull(pProducto1, "Tienes que seleccionar un producto tuyo");
 		this.productoCompetencia = Objects.requireNonNull(pProducto2, "Tienes que selecciuonar un producto de la competencia");
 		this.fechaComparacion= pFechaComparacion;
+		this.numeroPrecio=pNumeroPrecio;
 	}
 
+	public int getNumeroPrecio(){
+		return numeroPrecio;
+	}
+	public void setNumeroPrecio(int pNumeroPrecio){
+		this.numeroPrecio=pNumeroPrecio;
+	}
 	public Date getFechaComparacion() {
 		return this.fechaComparacion;
 	}

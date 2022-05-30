@@ -68,6 +68,7 @@ public class PanelListaComparaciones extends JPanel{
         modeloTabla.addColumn("Precio Promos Descuento 2");
         modeloTabla.addColumn("Precio Competencia Descuento 2");
         modeloTabla.addColumn("Fecha");
+        modeloTabla.addColumn("Numero Precio");
         
         tabla.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         tabla.setAutoCreateRowSorter(true);
@@ -78,7 +79,8 @@ public class PanelListaComparaciones extends JPanel{
                 String referencia=tabla.getValueAt(tabla.getSelectedRow(), 1).toString();
                 String codigoHijo=tabla.getValueAt(tabla.getSelectedRow(), 4).toString();
                 String fecha = tabla.getValueAt(tabla.getSelectedRow(), 13).toString();
-                interfaz.actualizarComparacionSeleccionada(referencia,codigoHijo,fecha);
+                int numeroPrecio = Integer.parseInt(tabla.getValueAt(tabla.getSelectedRow(),14).toString());
+                interfaz.actualizarComparacionSeleccionada(referencia,codigoHijo,fecha, numeroPrecio);
             }
         });
         JScrollPane panelScroll = new JScrollPane( tabla );
@@ -193,7 +195,7 @@ public class PanelListaComparaciones extends JPanel{
             modeloTabla.addRow(new Object[]{comp.getProductoPropio().getNombre(), comp.getProductoPropio().getReferencia(), comp.getProductoPropio().getDescuento(),comp.getProductoPropio().getDescuento2(),
                 comp.getProductoCompetencia().getCodigoHijo(),comp.getProductoCompetencia().getDescuento(),comp.getProductoCompetencia().getDescuento2(),comp.getProductoPropio().getPrecio1(), comp.getProductoCompetencia().getPrecioBase(),
                 comp.getProductoPropio().getPrecioDescuento(),comp.getProductoCompetencia().getPrecioDescuento(),comp.getProductoPropio().getPrecioDescuento2(),comp.getProductoCompetencia().getPrecioDescuento2()
-                ,comp.getFechaComparacion()!=null? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comp.getFechaComparacion()):new SimpleDateFormat("yyyy-MM-dd").format(new Date())
+                ,comp.getFechaComparacion()!=null? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comp.getFechaComparacion()):new SimpleDateFormat("yyyy-MM-dd").format(new Date()),comp.getNumeroPrecio()
             });
         }
         changeTable(tabla);

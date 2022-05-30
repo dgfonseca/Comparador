@@ -79,7 +79,7 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
     public void actionPerformed(ActionEvent e) {
         if("MODIFICAR".equals(e.getActionCommand())){
             dialog = new JDialog();
-            dialog.setSize(450,125);
+            dialog.setSize(450,175);
             NumberFormat numberFormat = NumberFormat.getNumberInstance(Locale.getDefault());
             DecimalFormat decimalFormat = (DecimalFormat) numberFormat;
             decimalFormat.setGroupingUsed(false);
@@ -96,21 +96,20 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
 
 
             dialog.setTitle("Establecer Descuentos");
-            JPanel p3 = new JPanel(new GridLayout(2,1));
+            JPanel p3 = new JPanel(new GridLayout(4,1));
             p3.add(new JLabel("Descuento Propio: "));
+            p3.add(new JLabel("Descuento Propio 2: "));
             p3.add(new JLabel("Descuento Competencia: "));
-            JPanel p4 = new JPanel(new GridLayout(2,1));
+            p3.add(new JLabel("Descuento Competencia 2: "));
+            JPanel p4 = new JPanel(new GridLayout(4,1));
             p4.add(field);
+            p4.add(field3);
             p4.add(field2);
-            
-            JPanel p6 = new JPanel(new GridLayout(2,1));
-            p6.add(field3);
-            p6.add(field4);
+            p4.add(field4);
 
-            JPanel p1 = new JPanel();
+            JPanel p1 = new JPanel(new GridLayout(1,2,3,3));
             p1.add(p3);
             p1.add(p4);
-            p1.add(p6);
 
             JPanel p2 = new JPanel(new GridLayout(1,2));
             JButton boton = new JButton("Cambiar Descuentos");

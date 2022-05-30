@@ -95,9 +95,6 @@ public class ComparativoMundo {
 
 	}
 
-
-
-
 	public Connection darConexion(){
 		return connection;
 	}
@@ -110,17 +107,16 @@ public class ComparativoMundo {
 		return productosCompetenciaCambiaron;
 	}
 	
-	public Comparacion obtenerComparacionPorReferencias(String referencia, String codigoHijo,String fecha ,boolean esHistorico){
+	public Comparacion obtenerComparacionPorReferencias(String referencia, String codigoHijo,int numeroPrecio, String fecha ,boolean esHistorico){
 		Comparacion rta = null;
 		boolean termino=false;
 		Comparacion actual;
-		System.out.println(esHistorico);
 		if(!esHistorico){
 			for(int i = 0;i<listaComparaciones.getListaComparaciones().size() && !termino;i++){
 				actual = listaComparaciones.getListaComparaciones().get(i);
 				if((referencia.equalsIgnoreCase(actual.getProductoPropio().getReferencia())
-				&& codigoHijo.equalsIgnoreCase(actual.getProductoCompetencia().getCodigoHijo()) || (referencia.equals(actual.getProductoPropio().getReferencia()) && codigoHijo.equals(actual.getProductoCompetencia().getCodigoHijo())) 
-				|| (referencia.contains(actual.getProductoPropio().getReferencia()) && codigoHijo.contains(actual.getProductoCompetencia().getCodigoHijo()))
+				&& codigoHijo.equalsIgnoreCase(actual.getProductoCompetencia().getCodigoHijo()) && numeroPrecio==actual.getNumeroPrecio() || (referencia.equals(actual.getProductoPropio().getReferencia()) && codigoHijo.equals(actual.getProductoCompetencia().getCodigoHijo()) && numeroPrecio==actual.getNumeroPrecio()) 
+				|| (referencia.contains(actual.getProductoPropio().getReferencia()) && codigoHijo.contains(actual.getProductoCompetencia().getCodigoHijo()) && numeroPrecio==actual.getNumeroPrecio())
 				)
 				){
 					rta=actual;
@@ -168,6 +164,7 @@ public class ComparativoMundo {
 		row.createCell(11).setCellValue("Precio promos descuento 2");
 		row.createCell(12).setCellValue("Precio competencia descuento 2");
 		row.createCell(13).setCellValue("Fecha");
+		row.createCell(14).setCellValue("Numero Precio");
 		CellStyle green = workbook.createCellStyle();
 		green.setFillForegroundColor(IndexedColors.GREEN.getIndex());
 		green.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -187,6 +184,7 @@ public class ComparativoMundo {
 			row.createCell(5).setCellValue(comparacion.getProductoCompetencia().getDescuento());
 			row.createCell(6).setCellValue(comparacion.getProductoCompetencia().getDescuento2());
 			row.createCell(13).setCellValue(comparacion.getFechaComparacion()!=null ? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comparacion.getFechaComparacion()): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+			row.createCell(14).setCellValue(comparacion.getNumeroPrecio());
 			if(comparacion.getProductoPropio().getPrecio1()>comparacion.getProductoCompetencia().getPrecioBase()){
 				Cell precioPropio=row.createCell(7);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecio1());
@@ -253,7 +251,7 @@ public class ComparativoMundo {
 			historicoComparaciones.getListaComparaciones().clear();
 			PreparedStatement ps = connection.prepareStatement("SELECT pp.referencia, pc.codigo_hijo,"+
 			 "cmp.fecha_comparacion, cmp.precio_propio, cmp.descuento_propio, cmp.precio_competencia, cmp.descuento_competencia,"+
-			 "cmp.descuento_propio2, cmp.descuento_competencia2, pp.nombre, pc.codigo_padre, pc.nombre FROM historico_comparaciones as cmp INNER JOIN PRODUCTOS_PROPIOS as pp on cmp.referencia_propio = pp.referencia "+
+			 "cmp.descuento_propio2, cmp.descuento_competencia2, pp.nombre, pc.codigo_padre, pc.nombre, cmp.numero_precio FROM historico_comparaciones as cmp INNER JOIN PRODUCTOS_PROPIOS as pp on cmp.referencia_propio = pp.referencia "+
 			"INNER JOIN PRODUCTOS_COMPETENCIA as pc on pc.codigo_hijo = cmp.referencia_competencia");
 			ResultSet rs = ps.executeQuery();
 			String referenciaPropio;
@@ -268,6 +266,7 @@ public class ComparativoMundo {
 			String codigoPadreCompetencia;
 			String nombreCompetencia;
 			double descuentoCompetencia2;
+			int numeroPrecio;
 			
 			while(rs.next()){
 					referenciaPropio = (String) rs.getObject(1);
@@ -282,9 +281,10 @@ public class ComparativoMundo {
 					nombrePropio = (String) rs.getObject(10);
 					codigoPadreCompetencia = (String) rs.getObject(11);
 					nombreCompetencia = (String) rs.getObject(12);
-					Producto propio = new Producto(nombrePropio, referenciaPropio, precioPropio, descuentoPropio,descuentoPropio2);
+					numeroPrecio = (int) rs.getObject(13);
+					Producto propio = new Producto(nombrePropio, referenciaPropio, precioPropio,0,0,0,0, descuentoPropio,descuentoPropio2);
 					propio.setDescuento(descuentoPropio);
-					historicoComparaciones.agregarComparacion(propio, new ProductoCompetencia(referenciaCompetencia, codigoPadreCompetencia, nombreCompetencia, precioCompetencia, descuentoCompetencia, descuentoCompetencia2), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(fechaComparacion));
+					historicoComparaciones.agregarComparacion(propio, new ProductoCompetencia(referenciaCompetencia, codigoPadreCompetencia, nombreCompetencia, precioCompetencia, descuentoCompetencia, descuentoCompetencia2), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(fechaComparacion),numeroPrecio);
 				
 			}
 			return historicoComparaciones;
@@ -294,18 +294,26 @@ public class ComparativoMundo {
 		
 	}
 
-	public Comparacion crearComparacion(Producto productoPropio, ProductoCompetencia productoCompetencia, String pFecha, boolean persistir) throws SQLException, ParseException{
+	public Comparacion crearComparacion(Producto productoPropio, ProductoCompetencia productoCompetencia, String pFecha, boolean persistir, int pPrecio) throws SQLException, ParseException{
 		if(productoPropio==null || productoCompetencia == null){
 			return null;
 		}else{
 			if(persistir){
-				PreparedStatement ps = connection.prepareStatement("INSERT INTO productos_propios(referencia,nombre,precio) "+
-				"VALUES(?,?,?) ON CONFLICT(referencia) DO UPDATE SET precio = ? "
+				PreparedStatement ps = connection.prepareStatement("INSERT INTO productos_propios(referencia,nombre,precio,precio2,precio3,precio4,precio5) "+
+				"VALUES(?,?,?,?,?,?,?) ON CONFLICT(referencia) DO UPDATE SET precio = ?, precio2= ?, precio3= ?, precio4 = ?, precio5 = ? "
 				);
 				ps.setString(1, productoPropio.getReferencia());
 				ps.setString(2, productoPropio.getNombre());
 				ps.setDouble(3, productoPropio.getPrecio1());
-				ps.setDouble(4, productoPropio.getPrecio1());
+				ps.setDouble(4, productoPropio.getPrecio2());
+				ps.setDouble(5, productoPropio.getPrecio3());
+				ps.setDouble(6, productoPropio.getPrecio4());
+				ps.setDouble(7, productoPropio.getPrecio5());
+				ps.setDouble(8, productoPropio.getPrecio1());
+				ps.setDouble(9, productoPropio.getPrecio2());
+				ps.setDouble(10, productoPropio.getPrecio3());
+				ps.setDouble(11, productoPropio.getPrecio4());
+				ps.setDouble(12, productoPropio.getPrecio5());
 				PreparedStatement ps2 = connection.prepareStatement("INSERT INTO productos_competencia(codigo_hijo,codigo_padre,nombre,precio) "+
 				"VALUES(?,?,?,?) ON CONFLICT(codigo_hijo) DO UPDATE SET precio = ?");
 				ps2.setString(1, productoCompetencia.getCodigoHijo());
@@ -313,27 +321,38 @@ public class ComparativoMundo {
 				ps2.setString(3, productoCompetencia.getNombre());
 				ps2.setDouble(4, productoCompetencia.getPrecioBase());
 				ps2.setDouble(5, productoCompetencia.getPrecioBase());
-				PreparedStatement ps3 = connection.prepareStatement("INSERT INTO historico_comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia, descuento_propio2, descuento_competencia2) "+
-				"VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT (referencia_propio, referencia_competencia, fecha_comparacion) DO UPDATE SET descuento_propio=?, descuento_competencia=?, descuento_propio2=?, descuento_competencia2=?");
+				PreparedStatement ps3 = connection.prepareStatement("INSERT INTO historico_comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia, descuento_propio2, descuento_competencia2, numero_precio) "+
+				"VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT (referencia_propio, referencia_competencia, fecha_comparacion) DO UPDATE SET descuento_propio=?, descuento_competencia=?, descuento_propio2=?, descuento_competencia2=?");
+				double precioPropio=productoPropio.getPrecio1();
+				if(pPrecio==2){
+					precioPropio=productoPropio.getPrecio2();
+				}if(pPrecio==3){
+					precioPropio= productoPropio.getPrecio3();
+				}if(pPrecio==4){
+					precioPropio= productoPropio.getPrecio4();
+				}if(pPrecio==5){
+					precioPropio= productoPropio.getPrecio5();
+				}
 				ps3.setString(1, productoPropio.getReferencia());
 				ps3.setString(2, productoCompetencia.getCodigoHijo());
 				ps3.setString(3, pFecha.toString());
-				ps3.setDouble(4, productoPropio.getPrecio1());
+				ps3.setDouble(4, precioPropio);
 				ps3.setDouble(5, productoPropio.getDescuento());
 				ps3.setDouble(6, productoCompetencia.getPrecioBase());
 				ps3.setDouble(7, productoCompetencia.getDescuento());
 				ps3.setDouble(8, productoPropio.getDescuento2());
 				ps3.setDouble(9, productoCompetencia.getDescuento2());
-				ps3.setDouble(10, productoPropio.getDescuento());
-				ps3.setDouble(11, productoCompetencia.getDescuento());
-				ps3.setDouble(12, productoPropio.getDescuento2());
-				ps3.setDouble(13, productoCompetencia.getDescuento2());
+				ps3.setInt(10, pPrecio);
+				ps3.setDouble(11, productoPropio.getDescuento());
+				ps3.setDouble(12, productoCompetencia.getDescuento());
+				ps3.setDouble(13, productoPropio.getDescuento2());
+				ps3.setDouble(14, productoCompetencia.getDescuento2());
 
 				PreparedStatement ps4 = connection.prepareStatement("INSERT INTO comparaciones(referencia_propio,referencia_competencia,descuento_propio,descuento_competencia," +
-				"descuento_propio2,descuento_competencia2)" +
-				"SELECT * FROM (SELECT ? AS referencia_propio, ? as referencia_competencia, ? as descuento_propio, ? as descuento_competencia, ? as descuento_propio2, ? as descuento_competencia2) AS temp "+
+				"descuento_propio2,descuento_competencia2, numero_precio)" +
+				"SELECT * FROM (SELECT ? AS referencia_propio, ? as referencia_competencia, ? as descuento_propio, ? as descuento_competencia, ? as descuento_propio2, ? as descuento_competencia2, ? as numero_precio) AS temp "+
 				"WHERE NOT EXISTS ( "+
-				"SELECT referencia_propio, referencia_competencia FROM comparaciones WHERE referencia_propio = ? and referencia_competencia = ?"+
+				"SELECT referencia_propio, referencia_competencia FROM comparaciones WHERE referencia_propio = ? and referencia_competencia = ? and numero_precio = ?"+
 				") LIMIT 1");
 				ps4.setString(1, productoPropio.getReferencia());
 				ps4.setString(2, productoCompetencia.getCodigoHijo());
@@ -341,8 +360,11 @@ public class ComparativoMundo {
 				ps4.setDouble(4, productoCompetencia.getDescuento());
 				ps4.setDouble(5, productoPropio.getDescuento2());
 				ps4.setDouble(6, productoCompetencia.getDescuento2());
-				ps4.setString(7, productoPropio.getReferencia());
-				ps4.setString(8, productoCompetencia.getCodigoHijo());
+				ps4.setDouble(7, pPrecio);
+				ps4.setString(8, productoPropio.getReferencia());
+				ps4.setString(9, productoCompetencia.getCodigoHijo());
+				ps4.setDouble(10, pPrecio);
+
 
 				ps.executeUpdate();
 				ps2.executeUpdate();
@@ -350,14 +372,14 @@ public class ComparativoMundo {
 				int rs5 = ps4.executeUpdate();
 				if(rs4>0 || rs5>0){
 					ps3.executeUpdate();
-					Comparacion rta = listaComparaciones.agregarComparacion(productoPropio, productoCompetencia, null);
+					Comparacion rta = listaComparaciones.agregarComparacion(productoPropio, productoCompetencia, null, pPrecio);
 					return rta;
 				}
 				else{
 					return null;
 				}
 			}else{
-				Comparacion rta = listaComparaciones.agregarComparacion(productoPropio, productoCompetencia, null);
+				Comparacion rta = listaComparaciones.agregarComparacion(productoPropio, productoCompetencia, null,1);
 				return rta;
 			}
 		}
@@ -377,15 +399,16 @@ public class ComparativoMundo {
 			}
         	java.util.Date date = new java.util.Date();
 				PreparedStatement ps = connection.prepareStatement("UPDATE comparaciones SET descuento_propio = ? , "+
-				"descuento_competencia = ?, descuento_propio2 = ?, descuento_competencia2 = ? WHERE referencia_propio = ? AND referencia_competencia = ?");
+				"descuento_competencia = ?, descuento_propio2 = ?, descuento_competencia2 = ? WHERE referencia_propio = ? AND referencia_competencia = ? AND numero_precio = ?");
 				ps.setDouble(1, comparacion.getProductoPropio().getDescuento());
 				ps.setDouble(2, comparacion.getProductoCompetencia().getDescuento());
 				ps.setDouble(3, comparacion.getProductoPropio().getDescuento2());
 				ps.setDouble(4, comparacion.getProductoCompetencia().getDescuento2());
 				ps.setString(5, comparacion.getProductoPropio().getReferencia());
 				ps.setString(6, comparacion.getProductoCompetencia().getCodigoHijo());
-				PreparedStatement ps3 = connection.prepareStatement("INSERT INTO historico_comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia, descuento_propio2, descuento_competencia2) "+
-				"VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT (referencia_propio, referencia_competencia, fecha_comparacion) DO UPDATE SET descuento_propio=?, descuento_competencia=?, descuento_propio2=?, descuento_competencia2=?");
+				ps.setInt(7, comparacion.getNumeroPrecio());
+				PreparedStatement ps3 = connection.prepareStatement("INSERT INTO historico_comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia, descuento_propio2, descuento_competencia2, numero_precio) "+
+				"VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT (referencia_propio, referencia_competencia, fecha_comparacion) DO UPDATE SET descuento_propio=?, descuento_competencia=?, descuento_propio2=?, descuento_competencia2=?");
 				ps3.setString(1, comparacion.getProductoPropio().getReferencia());
 				ps3.setString(2, comparacion.getProductoCompetencia().getCodigoHijo());
 				ps3.setString(3, formatter.format(date));
@@ -395,10 +418,11 @@ public class ComparativoMundo {
 				ps3.setDouble(7, comparacion.getProductoCompetencia().getDescuento());
 				ps3.setDouble(8, comparacion.getProductoPropio().getDescuento2());
 				ps3.setDouble(9, comparacion.getProductoCompetencia().getDescuento2());
-				ps3.setDouble(10, comparacion.getProductoPropio().getDescuento());
-				ps3.setDouble(11, comparacion.getProductoCompetencia().getDescuento());
-				ps3.setDouble(12, comparacion.getProductoPropio().getDescuento2());
-				ps3.setDouble(13, comparacion.getProductoCompetencia().getDescuento2());
+				ps3.setInt(10, comparacion.getNumeroPrecio());
+				ps3.setDouble(11, comparacion.getProductoPropio().getDescuento());
+				ps3.setDouble(12, comparacion.getProductoCompetencia().getDescuento());
+				ps3.setDouble(13, comparacion.getProductoPropio().getDescuento2());
+				ps3.setDouble(14, comparacion.getProductoCompetencia().getDescuento2());
 				ps3.executeUpdate();
 				int response = ps.executeUpdate();
 				if(response>0){
@@ -412,16 +436,16 @@ public class ComparativoMundo {
 		}
 	}
 
-
 	public boolean eliminarComparacion(Comparacion comparacion, boolean estaConectado, boolean esHistorico) throws SQLException{
 		if(estaConectado){
 
 			connection.setAutoCommit(false);
 			PreparedStatement ps = connection.prepareStatement("DELETE FROM comparaciones "+
-				"WHERE referencia_propio = ? AND referencia_competencia = ?");
+				"WHERE referencia_propio = ? AND referencia_competencia = ? AND numero_precio = ?");
 				
 				ps.setString(1, comparacion.getProductoPropio().getReferencia());
 				ps.setString(2, comparacion.getProductoCompetencia().getCodigoHijo());
+				ps.setInt(3, comparacion.getNumeroPrecio());
 				int response=0;
 
 				if(esHistorico){
@@ -465,12 +489,15 @@ public class ComparativoMundo {
 	public ListaComparaciones obtenerListaComparaciones(){
 		return listaComparaciones;
 	}
+	
 	public void obtenerListaComparacionesBaseDeDatos() throws SQLException{
 			listaComparaciones.getListaComparaciones().clear();
 		
 			PreparedStatement ps = connection.prepareStatement("SELECT pp.referencia, pc.codigo_hijo, pp.precio, cmp.descuento_propio,"+
 			"pc.precio, cmp.descuento_competencia,"+
-			"cmp.descuento_propio2, cmp.descuento_competencia2, pp.nombre, pc.codigo_padre, pc.nombre FROM COMPARACIONES as cmp INNER JOIN PRODUCTOS_PROPIOS as pp on cmp.referencia_propio = pp.referencia "+
+			"cmp.descuento_propio2, cmp.descuento_competencia2, pp.nombre, pc.codigo_padre, pc.nombre, cmp.numero_precio, "+
+			"pp.precio2, pp.precio3, pp.precio4, pp.precio5 "+
+			"FROM COMPARACIONES as cmp INNER JOIN PRODUCTOS_PROPIOS as pp on cmp.referencia_propio = pp.referencia "+
 			"INNER JOIN PRODUCTOS_COMPETENCIA as pc on pc.codigo_hijo = cmp.referencia_competencia");
 			ResultSet rs = ps.executeQuery();
 			String referenciaPropio;
@@ -484,11 +511,22 @@ public class ComparativoMundo {
 			String codigoPadreCompetencia;
 			String nombreCompetencia;
 			double descuentoCompetencia2;
+			int numeroPrecio;
 			
 			while(rs.next()){
 					referenciaPropio = (String) rs.getObject(1);
 					referenciaCompetencia = (String) rs.getObject(2);
+					numeroPrecio = (int) rs.getObject(12);
 					precioPropio = ((BigDecimal) rs.getObject(3))==null ? 0 : ((BigDecimal) rs.getObject(3)).doubleValue();
+					if(numeroPrecio==2){
+						precioPropio = ((BigDecimal) rs.getObject(13))==null ? 0 : ((BigDecimal) rs.getObject(13)).doubleValue();
+					}if(numeroPrecio==3){
+						precioPropio = ((BigDecimal) rs.getObject(14))==null ? 0 : ((BigDecimal) rs.getObject(14)).doubleValue();
+					}if(numeroPrecio==4){
+						precioPropio = ((BigDecimal) rs.getObject(15))==null ? 0 : ((BigDecimal) rs.getObject(15)).doubleValue();
+					}if(numeroPrecio==5){
+						precioPropio = ((BigDecimal) rs.getObject(16))==null ? 0 : ((BigDecimal) rs.getObject(16)).doubleValue();
+					}
 					descuentoPropio = ((BigDecimal) rs.getObject(4))== null ? 0 :((BigDecimal) rs.getObject(4)).doubleValue();
 					precioCompetencia = ((BigDecimal) rs.getObject(5)) == null ? 0 :((BigDecimal) rs.getObject(5)).doubleValue();
 					descuentoCompetencia = ((BigDecimal) rs.getObject(6)) == null ? 0 : ((BigDecimal) rs.getObject(6)).doubleValue();
@@ -497,13 +535,12 @@ public class ComparativoMundo {
 					nombrePropio = (String) rs.getObject(9);
 					codigoPadreCompetencia = (String) rs.getObject(10);
 					nombreCompetencia = (String) rs.getObject(11);
-					Producto propio = new Producto(nombrePropio, referenciaPropio, precioPropio, descuentoPropio,descuentoPropio2);
+					Producto propio = new Producto(nombrePropio, referenciaPropio, precioPropio, 0,0,0,0,descuentoPropio,descuentoPropio2);
 					propio.setDescuento(descuentoPropio);
-					listaComparaciones.agregarComparacion(propio, new ProductoCompetencia(referenciaCompetencia, codigoPadreCompetencia, nombreCompetencia, precioCompetencia, descuentoCompetencia, descuentoCompetencia2), null);
+					listaComparaciones.agregarComparacion(propio, new ProductoCompetencia(referenciaCompetencia, codigoPadreCompetencia, nombreCompetencia, precioCompetencia, descuentoCompetencia, descuentoCompetencia2), null, numeroPrecio);
 			}
 
 	}
-
 	
 	public ArrayList<ProductoCompetencia> obtenerInformacionExcelCompetencia(String path) throws Exception{
 
@@ -669,19 +706,27 @@ public class ComparativoMundo {
 	}
 
 	public void actualizarComparaciones() throws SQLException, UnknownHostException{
-		PreparedStatement ps = connection.prepareStatement("UPDATE productos_propios SET precio = ? "+
-				" WHERE referencia = ? AND precio != ?");
+		PreparedStatement ps = connection.prepareStatement("UPDATE productos_propios SET precio = ?, precio2 = ?, precio3 = ?, precio4 = ?, precio5 = ? "+
+				" WHERE referencia = ? AND (precio != ? OR precio2 != ? OR precio3 != ? OR precio4 != ? OR precio5 != ?)");
 		PreparedStatement ps2 = connection.prepareStatement("UPDATE productos_competencia SET precio = ? "+
-				" WHERE codigo_hijo = ? AND precio != ?");
-		PreparedStatement ps3 = connection.prepareStatement("INSERT INTO historico_comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia, descuento_propio2, descuento_competencia2) "+
-				"VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT (referencia_propio, referencia_competencia, fecha_comparacion) DO UPDATE SET descuento_propio=?, descuento_competencia=?, descuento_propio2=?, descuento_competencia2=?");
+				" WHERE codigo_hijo = ? AND precio != ? ");
+		PreparedStatement ps3 = connection.prepareStatement("INSERT INTO historico_comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia, descuento_propio2, descuento_competencia2, numero_precio) "+
+				"VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT (referencia_propio, referencia_competencia, fecha_comparacion) DO UPDATE SET descuento_propio=?, descuento_competencia=?, descuento_propio2=?, descuento_competencia2=?, numero_precio = ?");
 		for(int i=0; i<listaComparaciones.getListaComparaciones().size();i++){
 			Comparacion comp = listaComparaciones.getListaComparaciones().get(i);
 			Producto propio = obtenerProductoPorReferencia(comp.getProductoPropio().getReferencia());
 			ProductoCompetencia competencia = obtenerProductoCompetencia(comp.getProductoCompetencia().getCodigoHijo());
 			ps.setDouble(1, propio.getPrecio1());
-			ps.setString(2, propio.getReferencia());
-			ps.setDouble(3, propio.getPrecio1());
+			ps.setDouble(2, propio.getPrecio2());
+			ps.setDouble(3, propio.getPrecio3());
+			ps.setDouble(4, propio.getPrecio4());
+			ps.setDouble(5, propio.getPrecio5());
+			ps.setString(6, propio.getReferencia());
+			ps.setDouble(7, propio.getPrecio1());
+			ps.setDouble(8, propio.getPrecio2());
+			ps.setDouble(9, propio.getPrecio3());
+			ps.setDouble(10, propio.getPrecio4());
+			ps.setDouble(11, propio.getPrecio5());
 			ps2.setDouble(1, competencia.getPrecioBase());
 			ps2.setString(2, competencia.getCodigoHijo());
 			ps2.setDouble(3, competencia.getPrecioBase());
@@ -694,10 +739,12 @@ public class ComparativoMundo {
 			ps3.setDouble(7, comp.getProductoCompetencia().getDescuento());
 			ps3.setDouble(8, comp.getProductoPropio().getDescuento2());
 			ps3.setDouble(9, comp.getProductoCompetencia().getDescuento2());
-			ps3.setDouble(10, comp.getProductoPropio().getDescuento());
-			ps3.setDouble(11, comp.getProductoCompetencia().getDescuento());
-			ps3.setDouble(12, comp.getProductoPropio().getDescuento2());
-			ps3.setDouble(13, comp.getProductoCompetencia().getDescuento2());
+			ps3.setInt(10, comp.getNumeroPrecio());
+			ps3.setDouble(11, comp.getProductoPropio().getDescuento());
+			ps3.setDouble(12, comp.getProductoCompetencia().getDescuento());
+			ps3.setDouble(13, comp.getProductoPropio().getDescuento2());
+			ps3.setDouble(14, comp.getProductoCompetencia().getDescuento2());
+			ps3.setInt(15, comp.getNumeroPrecio());
 			int up1=ps.executeUpdate();
 			int up2=ps2.executeUpdate();
 			ps3.executeUpdate();

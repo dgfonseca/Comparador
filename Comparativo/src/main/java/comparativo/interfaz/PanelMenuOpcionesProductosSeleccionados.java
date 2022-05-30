@@ -19,6 +19,11 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
     private JTextField field;
     private JDialog dialog;
     JButton boton;
+    JButton boton1;
+    JButton boton2;
+    JButton boton3;
+    JButton boton4;
+    JButton boton5;
 
     public PanelMenuOpcionesProductosSeleccionados(InterfazComparativo pinterfaz){
         interfaz=pinterfaz;
@@ -41,7 +46,73 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
     @Override
     public void actionPerformed(ActionEvent e) {
         if("AGREGAR".equals(e.getActionCommand())){
-            interfaz.crearComparacion();
+            if(interfaz.getProductoPropioSeleccionado().getPrecio2()>0||interfaz.getProductoPropioSeleccionado().getPrecio3()>0
+            ||interfaz.getProductoPropioSeleccionado().getPrecio4()>0 || interfaz.getProductoPropioSeleccionado().getPrecio5()>0){
+            dialog = new JDialog();
+    
+            dialog.setSize(500,170);
+
+            dialog.setTitle("Seleccionar precio a comparar");
+            JPanel p3 = new JPanel(new GridLayout(1,5));
+            ActionListener actionListener = new ActionListener() {
+                public void actionPerformed(ActionEvent event) {
+                    
+                    if("1".equals(event.getActionCommand())){
+                        interfaz.crearComparacion(1);
+                    }if("2".equals(event.getActionCommand())){
+                        interfaz.crearComparacion(2);
+                    }if("3".equals(event.getActionCommand())){
+                        interfaz.crearComparacion(3);
+                    }if("4".equals(event.getActionCommand())){
+                        interfaz.crearComparacion(4);
+                    }if("5".equals(event.getActionCommand())){
+                        interfaz.crearComparacion(5);
+                    }
+                    dialog.dispose();
+                }
+            };
+
+            boton1 = new JButton("Precio 1");
+            boton2 = new JButton("Precio 2");
+            boton3 = new JButton("Precio 3");
+            boton4 = new JButton("Precio 4");
+            boton5 = new JButton("Precio 5");
+            boton1.setActionCommand("1");
+            boton1.addActionListener(actionListener);
+
+            boton2.setActionCommand("2");
+            boton2.addActionListener(actionListener);
+
+            boton3.setActionCommand("3");
+            boton3.addActionListener(actionListener);
+
+            boton4.setActionCommand("4");
+            boton4.addActionListener(actionListener);
+
+            boton5.setActionCommand("5");
+            boton5.addActionListener(actionListener);
+            p3.add(boton1);
+            p3.add(boton2);
+            p3.add(boton3);
+            p3.add(boton4);
+            p3.add(boton5);
+            
+
+            
+
+            JPanel p1 = new JPanel();
+            p1.add(p3);
+            dialog.setLayout(new BorderLayout());
+            dialog.add(p1,BorderLayout.CENTER);
+            dialog.add(new JPanel(), BorderLayout.EAST);
+            dialog.add(new JLabel("Seleccione el precio a comparar"), BorderLayout.NORTH);
+            dialog.setLocationRelativeTo(null);
+            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            dialog.setVisible(true);
+            }else{
+                interfaz.crearComparacion(1);
+            }
+
         }if("ELIMINAR".equals(e.getActionCommand())){
             int input = JOptionPane.showConfirmDialog(null, "¿Esta seguro que desea limpiar los productos seleccionados?");
             if(input == 0){

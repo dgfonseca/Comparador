@@ -15,6 +15,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
+import comparativo.mundo.ComparativoMarpicoMundo;
 import comparativo.mundo.ComparativoMundo;
 import comparativo.mundo.model.Catalogo;
 import comparativo.mundo.model.Categoria;
@@ -22,6 +23,8 @@ import comparativo.mundo.model.Comparacion;
 import comparativo.mundo.model.ListaComparaciones;
 import comparativo.mundo.model.Producto;
 import comparativo.mundo.model.ProductoCompetencia;
+import comparativo.mundo.response.CatalogoMarpico;
+import comparativo.mundo.response.ProductosMarpico;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.ProcessingException;
 
@@ -117,6 +120,10 @@ public class InterfazComparativo extends JFrame{
         add(cardPane,BorderLayout.CENTER);
         pack();
 
+    }
+
+    public Producto getProductoPropioSeleccionado(){
+        return this.productoPropioSeleccionado;
     }
 
     public void setEsHistorico(boolean pHistorico){
@@ -238,16 +245,16 @@ public class InterfazComparativo extends JFrame{
         comparacionActual=null;
         refrescarComparacionSeleccionada();
     }
-    public void actualizarComparacionSeleccionada(String referencia, String codigoHijo, String fecha){
-        comparacionActual = comparativo.obtenerComparacionPorReferencias(referencia, codigoHijo, fecha, esHistorico);
+    public void actualizarComparacionSeleccionada(String referencia, String codigoHijo, String fecha, int numeroPrecio){
+        comparacionActual = comparativo.obtenerComparacionPorReferencias(referencia, codigoHijo, numeroPrecio, fecha, esHistorico);
         refrescarComparacionSeleccionada();
     }
-    public void crearComparacion(){
+    public void crearComparacion(int numeroPrecio){
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         java.util.Date date = new java.util.Date();
         if(productoPropioSeleccionado!=null && productoCompetenciaSeleccionado!=null){
             try {
-                Comparacion rta = comparativo.crearComparacion(productoPropioSeleccionado, productoCompetenciaSeleccionado, formatter.format(date),estaConectadoBaseDeDatos);
+                Comparacion rta = comparativo.crearComparacion(productoPropioSeleccionado, productoCompetenciaSeleccionado, formatter.format(date),estaConectadoBaseDeDatos, numeroPrecio);
                 if(rta==null){
                     JOptionPane.showMessageDialog(new JFrame(), "Ya existe una comparacion con dichos productos", "Advertencia",
             JOptionPane.WARNING_MESSAGE);
@@ -390,7 +397,7 @@ public class InterfazComparativo extends JFrame{
         }
     }
     public void refrescarProductosSeleccionados(){
-        panelProductosSeleccionados.refrescar(productoPropioSeleccionado, productoCompetenciaSeleccionado, comparativo.getCategoriaPorReferencia());
+        panelProductosSeleccionados.refrescar(productoPropioSeleccionado, productoCompetenciaSeleccionado, categoriaActual);
     }
     public void refrescarProductos(){
         panelProductosPropios.refrescar(categoriaActual);
@@ -432,6 +439,7 @@ public class InterfazComparativo extends JFrame{
     public void buscarProductoPorReferencia(String pReferencia){
         try{
             productoPropioSeleccionado=comparativo.obtenerProductoPorReferencia(pReferencia);
+            categoriaActual=comparativo.getCategoriaPorReferencia();
             if(productoPropioSeleccionado == null){
                 JOptionPane.showMessageDialog(new JFrame(), "No se encontro el producto con referencia: "+pReferencia, "Informacion", JOptionPane.INFORMATION_MESSAGE);
             }else {
@@ -450,10 +458,16 @@ public class InterfazComparativo extends JFrame{
 	public static void main( String[] args ) 
     {
         
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                new InterfazComparativo();            }
-        });
+        // javax.swing.SwingUtilities.invokeLater(new Runnable() {
+        //     public void run() {
+        //         new InterfazComparativo();            }
+        // });
+
+        ComparativoMarpicoMundo comp = new ComparativoMarpicoMundo(null);
+        ProductosMarpico prod = comp.buscarProductoPorFamilia("GO0023");
+        prod.setPrecio(prod.getMateriales().get(0).getPrecio());
+        System.out.println(prod.getPrecioDescuento1());
+        System.out.println(prod.getPrecioDescuento2());
 
         
     }
