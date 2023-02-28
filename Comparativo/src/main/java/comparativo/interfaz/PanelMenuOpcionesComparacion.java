@@ -190,6 +190,7 @@ public class PanelMenuOpcionesComparacion extends JPanel implements ActionListen
         
     }
 
+    @SuppressWarnings("rawtypes")
     private static void backgroundLoad(String path, boolean esHistorico){
         final String ppath = path;
         final boolean historico = esHistorico;

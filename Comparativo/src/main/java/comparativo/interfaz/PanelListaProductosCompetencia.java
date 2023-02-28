@@ -15,12 +15,14 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import comparativo.mundo.model.ProductoCompetencia;
-
+import comparativo.mundo.persistence.ProductosMarpico;
+@SuppressWarnings("rawtypes")
 public class PanelListaProductosCompetencia extends JPanel implements ListSelectionListener {
 
     private InterfazComparativo interfaz;
-    private JList<ProductoCompetencia> listaProductos;
+    private JList listaProductos;
     private JScrollPane scroll;
+    private String competencia;
 
     public PanelListaProductosCompetencia(InterfazComparativo pInterfaz){
         interfaz=pInterfaz;
@@ -37,12 +39,22 @@ public class PanelListaProductosCompetencia extends JPanel implements ListSelect
         add(p1,BorderLayout.SOUTH);
     }
 
-    public void refrescar(ArrayList<ProductoCompetencia> productos){
-        DefaultListModel<ProductoCompetencia> data = new DefaultListModel<>();
-        for(ProductoCompetencia prod : productos){
-            data.addElement(prod);
+    public void refrescar(ArrayList<ProductoCompetencia> productos, ArrayList<ProductosMarpico> productosMarpico){
+        if(productos!=null){
+            DefaultListModel<ProductoCompetencia> data = new DefaultListModel<>();
+            for(ProductoCompetencia prod : productos){
+                data.addElement(prod);
+            }
+            listaProductos.setModel(data);
+            competencia="Promopciones";
+        }else{
+            DefaultListModel<ProductosMarpico> data = new DefaultListModel<>();
+            for(ProductosMarpico prod : productosMarpico){
+                data.addElement(prod);
+            }
+            listaProductos.setModel(data);
+            competencia="Marpico";
         }
-        listaProductos.setModel(data);
     }
 
     private JTextField createTextField() {
@@ -53,30 +65,50 @@ public class PanelListaProductosCompetencia extends JPanel implements ListSelect
             @Override public void changedUpdate(DocumentEvent e) {}
             private void filter() {
                 String filter = field.getText();
-                filterModel((DefaultListModel<ProductoCompetencia>)listaProductos.getModel(), filter);
+                filterModel((DefaultListModel)listaProductos.getModel(), filter);
             }
         });
         return field;
     }
 
-    public void filterModel(DefaultListModel<ProductoCompetencia> model, String filter) {
-        for (ProductoCompetencia s : interfaz.obtenerProductosCompetencia()) {
-            if (!s.getCodigoHijo().toLowerCase().contains(filter.toLowerCase()) && !s.getNombre().toLowerCase().contains(filter.toLowerCase())) {
-                if (model.contains(s)) {
-                    model.removeElement(s);
+    public void filterModel(DefaultListModel model, String filter) {
+        if(competencia.equals("Promopciones")){
+            for (ProductoCompetencia s : interfaz.obtenerProductosCompetencia()) {
+                if (!s.getCodigoHijo().toLowerCase().contains(filter.toLowerCase()) && !s.getNombre().toLowerCase().contains(filter.toLowerCase())) {
+                    if (model.contains(s)) {
+                        model.removeElement(s);
+                    }
+                }
+                 else {
+                    if (!model.contains(s)) {
+                        model.addElement(s);
+                    }
                 }
             }
-             else {
-                if (!model.contains(s)) {
-                    model.addElement(s);
+        }else{
+            for (ProductosMarpico s : interfaz.obtenerProductosMarpico()) {
+                if (!s.getFamilia().toLowerCase().contains(filter.toLowerCase())) {
+                    if (model.contains(s)) {
+                        model.removeElement(s);
+                    }
+                }
+                 else {
+                    if (!model.contains(s)) {
+                        model.addElement(s);
+                    }
                 }
             }
+
         }
     }
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        interfaz.setProductoCompetencia(listaProductos.getSelectedValue());
+        if(competencia.equalsIgnoreCase("Marpico")){
+            interfaz.setProductoCompetenciaMarpico((ProductosMarpico) listaProductos.getSelectedValue());
+        }else{
+            interfaz.setProductoCompetencia((ProductoCompetencia) listaProductos.getSelectedValue());
+        }
     }
     
 }

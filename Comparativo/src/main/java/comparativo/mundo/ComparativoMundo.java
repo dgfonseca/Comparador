@@ -6,9 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.UnknownHostException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -23,8 +20,26 @@ import comparativo.mundo.model.Comparacion;
 import comparativo.mundo.model.ListaComparaciones;
 import comparativo.mundo.model.Producto;
 import comparativo.mundo.model.ProductoCompetencia;
+import comparativo.mundo.model.Stock;
+import comparativo.mundo.persistence.CatalogoCatalogosPromocionales;
+import comparativo.mundo.persistence.CatalogoPromopciones;
+import comparativo.mundo.persistence.ComparacionesPromopciones;
+import comparativo.mundo.persistence.DataBaseConection;
 import comparativo.mundo.response.CategoriaResponse;
 import comparativo.mundo.response.ProductosResponse;
+import comparativo.mundo.response.StockPromopcionesResponse;
+import comparativo.mundo.response.StockResponse;
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -34,6 +49,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
@@ -52,12 +68,12 @@ public class ComparativoMundo {
 	
 	private Catalogo catalogoPropio;
 	private ArrayList<ProductoCompetencia> catalogoCompetencia;
-	private ArrayList<String> productosCambiaron;
-	private ArrayList<String> productosCompetenciaCambiaron;
+	private ArrayList<Producto> productosCambiaron;
+	private ArrayList<ProductoCompetencia> productosCompetenciaCambiaron;
 	private ListaComparaciones listaComparaciones;
 	private ListaComparaciones historicoComparaciones;
 	private ResteasyClient client;
-	private Connection connection;
+	private DataBaseConection connection;
 	private Categoria categoriaPorReferencia;
 
 	enum Campos {
@@ -78,7 +94,7 @@ public class ComparativoMundo {
 		this.catalogoCompetencia=null;
 		this.listaComparaciones = new ListaComparaciones();
 		this.historicoComparaciones=new ListaComparaciones();
-		this.connection = conexionDb(user, password, uri);
+		this.connection = new DataBaseConection(user, password, uri);
 		productosCompetenciaCambiaron = new ArrayList<>();
 		productosCambiaron = new ArrayList<>();
 		this.categoriaPorReferencia=null;
@@ -92,18 +108,86 @@ public class ComparativoMundo {
 		this.historicoComparaciones=new ListaComparaciones();
 		this.connection = null;
 		this.categoriaPorReferencia=null;
-
 	}
 
-	public Connection darConexion(){
-		return connection;
-	}
 
-	public ArrayList<String> getProductosActualizados(){
+	public String enviarEmail(String email) throws MessagingException{
+		String text = "No hubo actualización de precios en los productos";
+		if(productosCambiaron.size()>0&&productosCompetenciaCambiaron.size()>0){
+			text="Hubo una actualización en los precios de los productos propios y de la competencia:\nProductos propios:\n";
+			for (Producto producto : productosCambiaron) {
+				if(producto.getIndicadorSubio()==1){
+					text+=producto.getReferencia()+" subio de precio,\n";
+				}else if(producto.getIndicadorSubio()==-1){
+					text+=producto.getReferencia()+" bajo de precio,\n";
+				}
+			}
+			text+="Productos competencia:\n";
+			for (ProductoCompetencia producto : productosCompetenciaCambiaron) {
+				if(producto.getIndicadorSubio()==1){
+					text+=producto.getCodigoHijo()+" subio de precio,\n";
+				}else if(producto.getIndicadorSubio()==-1){
+					text+=producto.getCodigoHijo()+" bajo de precio,\n";
+				}
+			}
+		}
+		else if(this.productosCambiaron.size()>0){
+			text="Hubo una actualizacion de productos propios, los siguientes productos cambiaron de precio: \n";
+			for (Producto producto : productosCambiaron) {
+				if(producto.getIndicadorSubio()==1){
+					text+=producto.getReferencia()+" subio de precio,\n";
+				}else if(producto.getIndicadorSubio()==-1){
+					text+=producto.getReferencia()+" bajo de precio,\n";
+				}
+			}
+		}else if(this.productosCompetenciaCambiaron.size()>0){
+			text="Hubo una actualización de productos de Promopciones, los siguientes productos cambiaron de precio:\n";
+			for (ProductoCompetencia producto : productosCompetenciaCambiaron) {
+				if(producto.getIndicadorSubio()==1){
+					text+=producto.getCodigoHijo()+" subio de precio,\n";
+				}else if(producto.getIndicadorSubio()==-1){
+					text+=producto.getCodigoHijo()+" bajo de precio,\n";
+				}
+			}
+		}
+		if(this.productosCompetenciaCambiaron.size()>0||this.productosCambiaron.size()>0){
+			Properties prop = new Properties();
+			prop.put("mail.smtp.auth", true);
+			prop.put("mail.smtp.starttls.enable", "true");
+			prop.put("mail.smtp.host", "smtp-mail.outlook.com");
+			prop.put("mail.smtp.port", "587");
+			prop.put("mail.smtp.ssl.trust", "smtp-mail.outlook.com");
+			Session session = Session.getInstance(prop, new Authenticator() {
+				@Override
+				protected PasswordAuthentication getPasswordAuthentication() {
+					return new PasswordAuthentication("comparadorcataprom@outlook.com", "cataprom2023");
+				}
+			});
+			Message message = new MimeMessage(session);
+			message.setFrom(new InternetAddress("comparadorcataprom@outlook.com"));
+			message.setRecipients(
+			Message.RecipientType.TO, InternetAddress.parse(email));
+			message.setSubject("[COMPARADOR] Actualización de precios");
+	
+	
+			MimeBodyPart mimeBodyPart = new MimeBodyPart();
+			mimeBodyPart.setContent(text, "text/html; charset=utf-8");
+	
+			Multipart multipart = new MimeMultipart();
+			multipart.addBodyPart(mimeBodyPart);
+	
+			message.setContent(multipart);
+	
+			Transport.send(message);
+		}
+		return text;
+	}
+	
+	public ArrayList<Producto> getProductosActualizados(){
 		return productosCambiaron;
 	}
 	
-	public ArrayList<String> getProductosCompetenciaActualizaron(){
+	public ArrayList<ProductoCompetencia> getProductosCompetenciaActualizaron(){
 		return productosCompetenciaCambiaron;
 	}
 	
@@ -148,6 +232,7 @@ public class ComparativoMundo {
 		Workbook workbook = new XSSFWorkbook();
 		Sheet sheet = workbook.createSheet("listaComparaciones");
 		sheet.setDefaultColumnWidth(25);
+		sheet.setDefaultRowHeight((short)-1);
 		int rowNum = 0;
 		Row row = sheet.createRow(rowNum);
 		row.createCell(0).setCellValue("Nombre");
@@ -165,6 +250,8 @@ public class ComparativoMundo {
 		row.createCell(12).setCellValue("Precio competencia descuento 2");
 		row.createCell(13).setCellValue("Fecha");
 		row.createCell(14).setCellValue("Numero Precio");
+		row.createCell(15).setCellValue("Inventario Propio");
+		row.createCell(16).setCellValue("Inventario Competencia");
 		CellStyle green = workbook.createCellStyle();
 		green.setFillForegroundColor(IndexedColors.GREEN.getIndex());
 		green.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -172,6 +259,11 @@ public class ComparativoMundo {
 		red.setFillForegroundColor(IndexedColors.RED.getIndex());
 		red.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 		rowNum++;
+		DataFormat fmt = workbook.createDataFormat();
+		CellStyle cellStyle = workbook.createCellStyle();
+		cellStyle.setWrapText(true);
+		cellStyle.setDataFormat(
+			fmt.getFormat("@"));
 
 		for(int i = 0 ; i<lista.size(); i++){
 			Comparacion comparacion = lista.get(i);
@@ -185,6 +277,15 @@ public class ComparativoMundo {
 			row.createCell(6).setCellValue(comparacion.getProductoCompetencia().getDescuento2());
 			row.createCell(13).setCellValue(comparacion.getFechaComparacion()!=null ? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comparacion.getFechaComparacion()): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
 			row.createCell(14).setCellValue(comparacion.getNumeroPrecio());
+			
+			Cell stock1 = row.createCell(15);
+			stock1.setCellValue(comparacion.getProductoPropio().getStockToString());
+			stock1.setCellStyle(cellStyle);
+			Cell stock2 =row.createCell(16);
+			stock2.setCellValue(comparacion.getProductoCompetencia().getStockString());
+			stock2.setCellStyle(cellStyle);
+			row.setHeight((short) -1);
+			
 			if(comparacion.getProductoPropio().getPrecio1()>comparacion.getProductoCompetencia().getPrecioBase()){
 				Cell precioPropio=row.createCell(7);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecio1());
@@ -227,48 +328,30 @@ public class ComparativoMundo {
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento2());
 				precioPropio.setCellStyle(green);
 				Cell precioCompetencia=row.createCell(12);
+
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento2());
 				precioCompetencia.setCellStyle(red);
 			}
 		}
+		sheet.autoSizeColumn(15);
+		sheet.autoSizeColumn(16);
 		FileOutputStream out = new FileOutputStream(new File(path+".xlsx"));
 		workbook.write(out);
 		workbook.close();
 		out.close();
 	}
 
-	public Connection conexionDb(String user, String password, String uri) throws SQLException{
-		String url = "jdbc:postgresql://"+uri+"/comparativo";
-		Properties props = new Properties();
-		props.setProperty("user",user);
-		props.setProperty("password",password);
-		return DriverManager.getConnection(url,props);
-
-	}
 
 	public ListaComparaciones obtenerHistoricoComparaciones(boolean estaConectado) throws SQLException, ParseException{
 		if(estaConectado){	
 			historicoComparaciones.getListaComparaciones().clear();
-			PreparedStatement ps = connection.prepareStatement("SELECT pp.referencia, pc.codigo_hijo,"+
-			 "cmp.fecha_comparacion, cmp.precio_propio, cmp.descuento_propio, cmp.precio_competencia, cmp.descuento_competencia,"+
-			 "cmp.descuento_propio2, cmp.descuento_competencia2, pp.nombre, pc.codigo_padre, pc.nombre, cmp.numero_precio FROM historico_comparaciones as cmp INNER JOIN PRODUCTOS_PROPIOS as pp on cmp.referencia_propio = pp.referencia "+
-			"INNER JOIN PRODUCTOS_COMPETENCIA as pc on pc.codigo_hijo = cmp.referencia_competencia");
-			ResultSet rs = ps.executeQuery();
-			String referenciaPropio;
-			String referenciaCompetencia;
-			String fechaComparacion;
-			double precioPropio;
-			double descuentoPropio;
-			double precioCompetencia;
-			double descuentoCompetencia;
-			double descuentoPropio2;
-			String nombrePropio;
-			String codigoPadreCompetencia;
-			String nombreCompetencia;
-			double descuentoCompetencia2;
+			ComparacionesPromopciones persistence = new ComparacionesPromopciones(this.connection.getConnection());
+			ResultSet rs = persistence.getHistoricoComparaciones();
+			String referenciaPropio,referenciaCompetencia,fechaComparacion,nombrePropio,codigoPadreCompetencia,nombreCompetencia;
+			double precioPropio,descuentoPropio,precioCompetencia,descuentoCompetencia,descuentoPropio2,descuentoCompetencia2;
 			int numeroPrecio;
-			
 			while(rs.next()){
+					ArrayList<Stock> stocks = new ArrayList<>();
 					referenciaPropio = (String) rs.getObject(1);
 					referenciaCompetencia = (String) rs.getObject(2);
 					fechaComparacion = rs.getObject(3).toString();
@@ -282,10 +365,9 @@ public class ComparativoMundo {
 					codigoPadreCompetencia = (String) rs.getObject(11);
 					nombreCompetencia = (String) rs.getObject(12);
 					numeroPrecio = (int) rs.getObject(13);
-					Producto propio = new Producto(nombrePropio, referenciaPropio, precioPropio,0,0,0,0, descuentoPropio,descuentoPropio2);
+					Producto propio = new Producto(nombrePropio, referenciaPropio, precioPropio,0,0,0,0, descuentoPropio,descuentoPropio2,stocks);
 					propio.setDescuento(descuentoPropio);
-					historicoComparaciones.agregarComparacion(propio, new ProductoCompetencia(referenciaCompetencia, codigoPadreCompetencia, nombreCompetencia, precioCompetencia, descuentoCompetencia, descuentoCompetencia2), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(fechaComparacion),numeroPrecio);
-				
+					historicoComparaciones.agregarComparacion(propio, new ProductoCompetencia(referenciaCompetencia, codigoPadreCompetencia, nombreCompetencia, precioCompetencia, descuentoCompetencia, descuentoCompetencia2,"El historico no posee stock"), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(fechaComparacion),numeroPrecio);
 			}
 			return historicoComparaciones;
 		}else{
@@ -299,30 +381,22 @@ public class ComparativoMundo {
 			return null;
 		}else{
 			if(persistir){
-				PreparedStatement ps = connection.prepareStatement("INSERT INTO productos_propios(referencia,nombre,precio,precio2,precio3,precio4,precio5) "+
-				"VALUES(?,?,?,?,?,?,?) ON CONFLICT(referencia) DO UPDATE SET precio = ?, precio2= ?, precio3= ?, precio4 = ?, precio5 = ? "
-				);
-				ps.setString(1, productoPropio.getReferencia());
-				ps.setString(2, productoPropio.getNombre());
-				ps.setDouble(3, productoPropio.getPrecio1());
-				ps.setDouble(4, productoPropio.getPrecio2());
-				ps.setDouble(5, productoPropio.getPrecio3());
-				ps.setDouble(6, productoPropio.getPrecio4());
-				ps.setDouble(7, productoPropio.getPrecio5());
-				ps.setDouble(8, productoPropio.getPrecio1());
-				ps.setDouble(9, productoPropio.getPrecio2());
-				ps.setDouble(10, productoPropio.getPrecio3());
-				ps.setDouble(11, productoPropio.getPrecio4());
-				ps.setDouble(12, productoPropio.getPrecio5());
-				PreparedStatement ps2 = connection.prepareStatement("INSERT INTO productos_competencia(codigo_hijo,codigo_padre,nombre,precio) "+
-				"VALUES(?,?,?,?) ON CONFLICT(codigo_hijo) DO UPDATE SET precio = ?");
-				ps2.setString(1, productoCompetencia.getCodigoHijo());
-				ps2.setString(2, productoCompetencia.getCodigoPadre());
-				ps2.setString(3, productoCompetencia.getNombre());
-				ps2.setDouble(4, productoCompetencia.getPrecioBase());
-				ps2.setDouble(5, productoCompetencia.getPrecioBase());
-				PreparedStatement ps3 = connection.prepareStatement("INSERT INTO historico_comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia, descuento_propio2, descuento_competencia2, numero_precio) "+
-				"VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT (referencia_propio, referencia_competencia, fecha_comparacion) DO UPDATE SET descuento_propio=?, descuento_competencia=?, descuento_propio2=?, descuento_competencia2=?");
+				
+				CatalogoPromopciones competenciaPersistence = new CatalogoPromopciones(this.connection.getConnection());
+				ArrayList<StockPromopcionesResponse> stockResponse = competenciaPersistence.getStockInformation(productoCompetencia.getCodigoPadre(), this.catalogoCompetencia);
+				productoCompetencia.processStock(stockResponse);
+				competenciaPersistence.insertProducto(productoCompetencia.getCodigoHijo(), productoCompetencia.getCodigoPadre(), productoCompetencia.getNombre(), productoCompetencia.getPrecioBase(),productoCompetencia.getStockString());
+				
+				CatalogoCatalogosPromocionales propioPersistence = new CatalogoCatalogosPromocionales(this.connection.getConnection());
+				propioPersistence.insertProducto(productoPropio.getReferencia(), productoPropio.getNombre(), productoPropio.getPrecio1(), productoPropio.getPrecio2(), productoPropio.getPrecio3(), productoPropio.getPrecio4(), productoPropio.getPrecio5());
+				
+				ArrayList<Stock> stocks = getStocks(productoPropio.getReferencia());
+				productoPropio.setStock(stocks);
+
+				for (int i = 0; i < stocks.size(); i++) {
+					propioPersistence.insertStockProducto(stocks.get(i));
+				}
+
 				double precioPropio=productoPropio.getPrecio1();
 				if(pPrecio==2){
 					precioPropio=productoPropio.getPrecio2();
@@ -333,45 +407,13 @@ public class ComparativoMundo {
 				}if(pPrecio==5){
 					precioPropio= productoPropio.getPrecio5();
 				}
-				ps3.setString(1, productoPropio.getReferencia());
-				ps3.setString(2, productoCompetencia.getCodigoHijo());
-				ps3.setString(3, pFecha.toString());
-				ps3.setDouble(4, precioPropio);
-				ps3.setDouble(5, productoPropio.getDescuento());
-				ps3.setDouble(6, productoCompetencia.getPrecioBase());
-				ps3.setDouble(7, productoCompetencia.getDescuento());
-				ps3.setDouble(8, productoPropio.getDescuento2());
-				ps3.setDouble(9, productoCompetencia.getDescuento2());
-				ps3.setInt(10, pPrecio);
-				ps3.setDouble(11, productoPropio.getDescuento());
-				ps3.setDouble(12, productoCompetencia.getDescuento());
-				ps3.setDouble(13, productoPropio.getDescuento2());
-				ps3.setDouble(14, productoCompetencia.getDescuento2());
 
-				PreparedStatement ps4 = connection.prepareStatement("INSERT INTO comparaciones(referencia_propio,referencia_competencia,descuento_propio,descuento_competencia," +
-				"descuento_propio2,descuento_competencia2, numero_precio)" +
-				"SELECT * FROM (SELECT ? AS referencia_propio, ? as referencia_competencia, ? as descuento_propio, ? as descuento_competencia, ? as descuento_propio2, ? as descuento_competencia2, ? as numero_precio) AS temp "+
-				"WHERE NOT EXISTS ( "+
-				"SELECT referencia_propio, referencia_competencia FROM comparaciones WHERE referencia_propio = ? and referencia_competencia = ? and numero_precio = ?"+
-				") LIMIT 1");
-				ps4.setString(1, productoPropio.getReferencia());
-				ps4.setString(2, productoCompetencia.getCodigoHijo());
-				ps4.setDouble(3, productoPropio.getDescuento());
-				ps4.setDouble(4, productoCompetencia.getDescuento());
-				ps4.setDouble(5, productoPropio.getDescuento2());
-				ps4.setDouble(6, productoCompetencia.getDescuento2());
-				ps4.setDouble(7, pPrecio);
-				ps4.setString(8, productoPropio.getReferencia());
-				ps4.setString(9, productoCompetencia.getCodigoHijo());
-				ps4.setDouble(10, pPrecio);
-
-
-				ps.executeUpdate();
-				ps2.executeUpdate();
-				int rs4 = ps3.executeUpdate();
-				int rs5 = ps4.executeUpdate();
+				ComparacionesPromopciones comparacionPersistence = new ComparacionesPromopciones(this.connection.getConnection());
+				int rs5 = comparacionPersistence.insertComparacion(productoPropio.getReferencia(), productoCompetencia.getCodigoHijo(), productoPropio.getDescuento(), productoCompetencia.getDescuento(), productoPropio.getDescuento2(), productoCompetencia.getDescuento2(), pPrecio);
+				int rs4 = comparacionPersistence.insertHistoricoComparacion(productoPropio.getReferencia(), productoCompetencia.getCodigoHijo(), pFecha.toString(), 
+				precioPropio, productoPropio.getDescuento(), productoCompetencia.getPrecioBase(), productoCompetencia.getDescuento(), productoPropio.getDescuento2(), productoCompetencia.getDescuento2(), pPrecio);
+				
 				if(rs4>0 || rs5>0){
-					ps3.executeUpdate();
 					Comparacion rta = listaComparaciones.agregarComparacion(productoPropio, productoCompetencia, null, pPrecio);
 					return rta;
 				}
@@ -383,6 +425,19 @@ public class ComparativoMundo {
 				return rta;
 			}
 		}
+	}
+
+	public ArrayList<Stock> getStocks(String referencia){
+		client= (ResteasyClient) ClientBuilder.newBuilder().build();
+		ResteasyWebTarget target = this.client.target("https://api.cataprom.com/rest/stock/"+referencia);
+		String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
+		StockResponse stocks = new Gson().fromJson(response, StockResponse.class);
+		return stocks.getResultado();
+		// ArrayList<Stock> stock = new ArrayList<>();
+		// stock.add(new Stock(referencia, "Rojo", 1000, 1000, 2000, "2023-02-19",1000, "En Transito"));
+		// stock.add(new Stock(referencia, "Amarillo", 2000, 700, 3000, "2023-03-01",300, "En Transito"));
+		// stock.add(new Stock(referencia, "Verde", 600, 1000, 2500, "2023-02-25",2800, "En Transito"));
+		// return stock;
 	}
 
 	public boolean actualizarDescuentoComparacion(Comparacion comparacion, double descuentoPropio, double descuentoCompetencia, double descuentoPropio2, double descuentoCompetencia2, boolean estaConectado) throws SQLException{
@@ -398,38 +453,29 @@ public class ComparativoMundo {
 				comparacion.getProductoCompetencia().setDescuento2(descuentoCompetencia2);
 			}
         	java.util.Date date = new java.util.Date();
-				PreparedStatement ps = connection.prepareStatement("UPDATE comparaciones SET descuento_propio = ? , "+
-				"descuento_competencia = ?, descuento_propio2 = ?, descuento_competencia2 = ? WHERE referencia_propio = ? AND referencia_competencia = ? AND numero_precio = ?");
-				ps.setDouble(1, comparacion.getProductoPropio().getDescuento());
-				ps.setDouble(2, comparacion.getProductoCompetencia().getDescuento());
-				ps.setDouble(3, comparacion.getProductoPropio().getDescuento2());
-				ps.setDouble(4, comparacion.getProductoCompetencia().getDescuento2());
-				ps.setString(5, comparacion.getProductoPropio().getReferencia());
-				ps.setString(6, comparacion.getProductoCompetencia().getCodigoHijo());
-				ps.setInt(7, comparacion.getNumeroPrecio());
-				PreparedStatement ps3 = connection.prepareStatement("INSERT INTO historico_comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia, descuento_propio2, descuento_competencia2, numero_precio) "+
-				"VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT (referencia_propio, referencia_competencia, fecha_comparacion) DO UPDATE SET descuento_propio=?, descuento_competencia=?, descuento_propio2=?, descuento_competencia2=?");
-				ps3.setString(1, comparacion.getProductoPropio().getReferencia());
-				ps3.setString(2, comparacion.getProductoCompetencia().getCodigoHijo());
-				ps3.setString(3, formatter.format(date));
-				ps3.setDouble(4, comparacion.getProductoPropio().getPrecio1());
-				ps3.setDouble(5, comparacion.getProductoPropio().getDescuento());
-				ps3.setDouble(6, comparacion.getProductoCompetencia().getPrecioBase());
-				ps3.setDouble(7, comparacion.getProductoCompetencia().getDescuento());
-				ps3.setDouble(8, comparacion.getProductoPropio().getDescuento2());
-				ps3.setDouble(9, comparacion.getProductoCompetencia().getDescuento2());
-				ps3.setInt(10, comparacion.getNumeroPrecio());
-				ps3.setDouble(11, comparacion.getProductoPropio().getDescuento());
-				ps3.setDouble(12, comparacion.getProductoCompetencia().getDescuento());
-				ps3.setDouble(13, comparacion.getProductoPropio().getDescuento2());
-				ps3.setDouble(14, comparacion.getProductoCompetencia().getDescuento2());
-				ps3.executeUpdate();
-				int response = ps.executeUpdate();
-				if(response>0){
-					return true;
-				}else{
-					return false;
-				}
+
+			ComparacionesPromopciones comparacionPersistence = new ComparacionesPromopciones(this.connection.getConnection());
+				
+			int response = comparacionPersistence.updateDescuentoComparacion(comparacion.getProductoPropio().getDescuento(), comparacion.getProductoCompetencia().getDescuento(), comparacion.getProductoPropio().getDescuento2(), comparacion.getProductoCompetencia().getDescuento2(), comparacion.getProductoPropio().getReferencia(), comparacion.getProductoCompetencia().getCodigoHijo(), comparacion.getNumeroPrecio());
+			double precioPropio=comparacion.getProductoPropio().getPrecio1();
+			int pPrecio=comparacion.getNumeroPrecio();
+			if(pPrecio==2){
+				precioPropio=comparacion.getProductoPropio().getPrecio2();
+			}if(pPrecio==3){
+				precioPropio= comparacion.getProductoPropio().getPrecio3();
+			}if(pPrecio==4){
+				precioPropio= comparacion.getProductoPropio().getPrecio4();
+			}if(pPrecio==5){
+				precioPropio= comparacion.getProductoPropio().getPrecio5();
+			}
+				
+			comparacionPersistence.updateDescuentoHistoricoComparacion(comparacion.getProductoPropio().getReferencia(), comparacion.getProductoCompetencia().getCodigoHijo(), formatter.format(date), precioPropio, comparacion.getProductoPropio().getDescuento(), comparacion.getProductoCompetencia().getPrecioBase(), comparacion.getProductoCompetencia().getDescuento(), comparacion.getProductoPropio().getDescuento2(), comparacion.getProductoCompetencia().getDescuento2(), pPrecio);
+				
+			if(response>0){
+				return true;
+			}else{
+				return false;
+			}
 		}
 		else{
 			return false;
@@ -438,47 +484,28 @@ public class ComparativoMundo {
 
 	public boolean eliminarComparacion(Comparacion comparacion, boolean estaConectado, boolean esHistorico) throws SQLException{
 		if(estaConectado){
-
-			connection.setAutoCommit(false);
-			PreparedStatement ps = connection.prepareStatement("DELETE FROM comparaciones "+
-				"WHERE referencia_propio = ? AND referencia_competencia = ? AND numero_precio = ?");
-				
-				ps.setString(1, comparacion.getProductoPropio().getReferencia());
-				ps.setString(2, comparacion.getProductoCompetencia().getCodigoHijo());
-				ps.setInt(3, comparacion.getNumeroPrecio());
-				int response=0;
+				boolean eliminacion;
+				ComparacionesPromopciones comparacionesPersistence = new ComparacionesPromopciones(connection.getConnection());
 
 				if(esHistorico){
 					SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-					PreparedStatement ps2 = connection.prepareStatement("DELETE FROM historico_comparaciones "+
-					"WHERE referencia_propio = ? AND referencia_competencia = ? and fecha_comparacion=?");
-					
-					ps2.setString(1, comparacion.getProductoPropio().getReferencia());
-					ps2.setString(2, comparacion.getProductoCompetencia().getCodigoHijo());
-					ps2.setString(3, formatter.format(comparacion.getFechaComparacion()));
-					response = ps2.executeUpdate();
+					eliminacion = comparacionesPersistence.deleteHistoricoComparacion(comparacion.getProductoPropio().getReferencia(), comparacion.getProductoCompetencia().getCodigoHijo(), formatter.format(comparacion.getFechaComparacion()));
 				}else{
-					 response = ps.executeUpdate();
-
+					eliminacion = comparacionesPersistence.deleteComparacion(comparacion.getProductoPropio().getReferencia(), comparacion.getProductoCompetencia().getCodigoHijo(), comparacion.getNumeroPrecio());
 				}
-				if(response>0){
-					boolean eliminacion= false;
+				if(eliminacion){
 					if(esHistorico){
-						eliminacion = historicoComparaciones.eliminarComparacion(comparacion);
+						historicoComparaciones.eliminarComparacion(comparacion);
 					}else{
-						eliminacion=listaComparaciones.eliminarComparacion(comparacion);
+						listaComparaciones.eliminarComparacion(comparacion);
 					}
 					if(eliminacion){
-						connection.commit();
-						connection.setAutoCommit(true);
 						return true;
 					}else{
-						connection.rollback();
 						return false;
 					}
 				}
 				else{
-					connection.setAutoCommit(true);
 					return false;
 				}
 		}else{
@@ -492,28 +519,17 @@ public class ComparativoMundo {
 	
 	public void obtenerListaComparacionesBaseDeDatos() throws SQLException{
 			listaComparaciones.getListaComparaciones().clear();
-		
-			PreparedStatement ps = connection.prepareStatement("SELECT pp.referencia, pc.codigo_hijo, pp.precio, cmp.descuento_propio,"+
-			"pc.precio, cmp.descuento_competencia,"+
-			"cmp.descuento_propio2, cmp.descuento_competencia2, pp.nombre, pc.codigo_padre, pc.nombre, cmp.numero_precio, "+
-			"pp.precio2, pp.precio3, pp.precio4, pp.precio5 "+
-			"FROM COMPARACIONES as cmp INNER JOIN PRODUCTOS_PROPIOS as pp on cmp.referencia_propio = pp.referencia "+
-			"INNER JOIN PRODUCTOS_COMPETENCIA as pc on pc.codigo_hijo = cmp.referencia_competencia");
-			ResultSet rs = ps.executeQuery();
-			String referenciaPropio;
-			String referenciaCompetencia;
-			double precioPropio;
-			double descuentoPropio;
-			double precioCompetencia;
-			double descuentoCompetencia;
-			double descuentoPropio2;
-			String nombrePropio;
-			String codigoPadreCompetencia;
-			String nombreCompetencia;
-			double descuentoCompetencia2;
+			ComparacionesPromopciones comparacionesPersistence = new ComparacionesPromopciones(connection.getConnection());
+			CatalogoCatalogosPromocionales propiosPersistence = new CatalogoCatalogosPromocionales(connection.getConnection());
+			ResultSet rs = comparacionesPersistence.getListaComparaciones();
+			String referenciaPropio,referenciaCompetencia,nombrePropio,codigoPadreCompetencia,nombreCompetencia;
+			double precioPropio,descuentoPropio,precioCompetencia,descuentoCompetencia,descuentoPropio2,descuentoCompetencia2;
+			String color,llegadaBodegaLocal,estadoOrden,stockString;
+			int bodegaLocal,bodegaZonaFranca,totalDisponible,cantidadTransito;
 			int numeroPrecio;
 			
 			while(rs.next()){
+					ArrayList<Stock> stock = new ArrayList<>();
 					referenciaPropio = (String) rs.getObject(1);
 					referenciaCompetencia = (String) rs.getObject(2);
 					numeroPrecio = (int) rs.getObject(12);
@@ -535,9 +551,22 @@ public class ComparativoMundo {
 					nombrePropio = (String) rs.getObject(9);
 					codigoPadreCompetencia = (String) rs.getObject(10);
 					nombreCompetencia = (String) rs.getObject(11);
-					Producto propio = new Producto(nombrePropio, referenciaPropio, precioPropio, 0,0,0,0,descuentoPropio,descuentoPropio2);
+					stockString = (String) rs.getObject(17);
+
+					ResultSet rs2 = propiosPersistence.getStock(referenciaPropio);
+					while(rs2.next()){
+						color = ((String) rs2.getObject(1));
+						bodegaLocal = ((BigDecimal) rs2.getObject(2)) == null ? 0 :((BigDecimal) rs2.getObject(2)).intValue();
+						bodegaZonaFranca = ((BigDecimal) rs2.getObject(3)) == null ? 0 : ((BigDecimal) rs2.getObject(3)).intValue();
+						totalDisponible = ((BigDecimal) rs2.getObject(4)) == null ? 0 : ((BigDecimal) rs2.getObject(4)).intValue();
+						llegadaBodegaLocal = ((String) rs2.getObject(5));
+						cantidadTransito = ((BigDecimal) rs2.getObject(6)) == null ? 0 : ((BigDecimal) rs2.getObject(6)).intValue();
+						estadoOrden = (String) rs2.getObject(7);
+						stock.add(new Stock(referenciaPropio, color, bodegaLocal, bodegaZonaFranca, totalDisponible, llegadaBodegaLocal, cantidadTransito, estadoOrden));
+					}
+					Producto propio = new Producto(nombrePropio, referenciaPropio, precioPropio, 0,0,0,0,descuentoPropio,descuentoPropio2,stock);
 					propio.setDescuento(descuentoPropio);
-					listaComparaciones.agregarComparacion(propio, new ProductoCompetencia(referenciaCompetencia, codigoPadreCompetencia, nombreCompetencia, precioCompetencia, descuentoCompetencia, descuentoCompetencia2), null, numeroPrecio);
+					listaComparaciones.agregarComparacion(propio, new ProductoCompetencia(referenciaCompetencia, codigoPadreCompetencia, nombreCompetencia, precioCompetencia, descuentoCompetencia, descuentoCompetencia2,stockString), null, numeroPrecio);
 			}
 
 	}
@@ -593,9 +622,9 @@ public class ComparativoMundo {
 			String nombre;
 			double precio;
 			if (cellCodigoHijo.getCellType() == CellType.NUMERIC){
-				codigoHijo = (cellCodigoHijo.getNumericCellValue()+"").trim().replaceAll("\\s+","");
+				codigoHijo = (cellCodigoHijo.getNumericCellValue()+"");
 			}else{
-				codigoHijo = (cellCodigoHijo.getStringCellValue()).trim().replaceAll("\\s+","");
+				codigoHijo = (cellCodigoHijo.getStringCellValue());
 			}
 			if (cellCodigoPadre.getCellType() == CellType.NUMERIC){
 				codigoPadre = cellCodigoPadre.getNumericCellValue()+"";
@@ -637,19 +666,51 @@ public class ComparativoMundo {
 		return historicoComparaciones;
 	}
 
-	public Catalogo obtenerInformacionApiCategorias() throws ForbiddenException, ProcessingException, UnknownHostException{
-		client=(ResteasyClient) ClientBuilder.newClient();
+	public Catalogo obtenerInformacionApiCategorias() /*throws ForbiddenException, ProcessingException, UnknownHostException*/{
+		client= (ResteasyClient) ClientBuilder.newBuilder().build();
 		ResteasyWebTarget target = this.client.target("https://api.cataprom.com/rest/categorias");
 		String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
 		CategoriaResponse categorias = new Gson().fromJson(response, CategoriaResponse.class);
-	
 		return new Catalogo(categorias.getResultado());
+
+
+		// ArrayList<Stock> stock = new ArrayList<>();
+		// stock.add(new Stock("t01", "Rojo", 100, 100, 300, "2023-02-19", 100, "En Camino"));
+		// stock.add(new Stock("t01", "Verde", 300, 300, 300, "2023-02-22", 100, "En Camino"));
+		// Categoria newCategoria = new Categoria("Test1", 1);
+		// Producto newProducto1 = new Producto("Producto Test1", "t01", 10000, 0, 0, 0, 0,stock);
+		// stock.removeAll(stock);
+		// stock.add(new Stock("t02", "Amarillo", 100, 100, 300, "2023-02-19", 100, "En Camino"));
+		// Producto newProducto2 = new Producto("Producto Test2", "t02", 20000, 0, 0, 0, 0,stock);
+		// Producto newProducto3 = new Producto("Producto Test3", "t03", 30000, 32000, 33000, 0, 35000,null);
+		// ArrayList<Producto> productosList = new ArrayList<>();
+		// productosList.add(newProducto1);
+		// productosList.add(newProducto2);
+		// productosList.add(newProducto3);
+		// newCategoria.setProductos(productosList);
+
+		// Categoria newCategoria2 = new Categoria("Test2", 1);
+		// stock.removeAll(stock);
+		// stock.add(new Stock("t011", "Rosado", 100, 100, 300, "2023-02-19", 100, "En Camino"));
+		// Producto newProducto11 = new Producto("Producto Test11", "t011", 5000, 0, 3000, 0, 0,stock);
+		// Producto newProducto12 = new Producto("Producto Test12", "t012", 70000, 0, 60000, 0, 0,null);
+		// ArrayList<Producto> productosList2 = new ArrayList<>();
+		// productosList2.add(newProducto12);
+		// productosList2.add(newProducto11);
+
+		// ArrayList<Categoria> categorias = new ArrayList<>();
+		// categorias.add(newCategoria);
+		// categorias.add(newCategoria2);
+	
+		// return new Catalogo(categorias);
 	}
 
 	public Producto obtenerProductoPorReferencia(String pReferencia) throws UnknownHostException{
 		Producto rta = null;
 		ArrayList<Producto> productos = new ArrayList<>();
 		boolean termino=false;
+		client= (ResteasyClient) ClientBuilder.newBuilder().build();
+
 		for(int i = 0; i < catalogoPropio.getCatalogo().size() && !termino; i++){
 			ResteasyWebTarget target = client.target("https://api.cataprom.com/rest/categorias/"+catalogoPropio.getCatalogo().get(i).getId()+"/productos");
 			String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
@@ -705,59 +766,87 @@ public class ComparativoMundo {
 
 	}
 
+	public void determinarSubio(Producto propioActual, Producto propioActualizado, ProductoCompetencia competenciaActual, ProductoCompetencia competenciaActualizado, int numeroPrecio){
+		if(competenciaActual.getPrecioBase()>competenciaActualizado.getPrecioBase()){
+			competenciaActualizado.setIndicadorSubio(-1);
+		}if(competenciaActual.getPrecioBase()<competenciaActualizado.getPrecioBase()){
+			competenciaActualizado.setIndicadorSubio(1);
+		}
+		if(numeroPrecio==1){
+			if(propioActual.getPrecio1()>propioActualizado.getPrecio1()){
+				propioActualizado.setIndicadorSubio(-1);
+			}else if(propioActual.getPrecio1()<propioActualizado.getPrecio1()){
+				propioActualizado.setIndicadorSubio(1);
+			}
+		}
+		else if(numeroPrecio==2){
+			if(propioActual.getPrecio2()>propioActualizado.getPrecio2()){
+				propioActualizado.setIndicadorSubio(-1);
+			}else if(propioActual.getPrecio2()<propioActualizado.getPrecio2()){
+				propioActualizado.setIndicadorSubio(1);
+			}
+		}
+		else if(numeroPrecio==3){
+			if(propioActual.getPrecio3()>propioActualizado.getPrecio3()){
+				propioActualizado.setIndicadorSubio(-1);
+			}else if(propioActual.getPrecio3()<propioActualizado.getPrecio3()){
+				propioActualizado.setIndicadorSubio(1);
+			}
+		}
+		else if(numeroPrecio==4){
+			if(propioActual.getPrecio4()>propioActualizado.getPrecio4()){
+				propioActualizado.setIndicadorSubio(-1);
+			}else if(propioActual.getPrecio4()<propioActualizado.getPrecio4()){
+				propioActualizado.setIndicadorSubio(1);
+			}
+		}
+		else if(numeroPrecio==5){
+			if(propioActual.getPrecio5()>propioActualizado.getPrecio5()){
+				propioActualizado.setIndicadorSubio(-1);
+			}else if(propioActual.getPrecio5()<propioActualizado.getPrecio5()){
+				propioActualizado.setIndicadorSubio(1);
+			}
+		}
+	}
+
 	public void actualizarComparaciones() throws SQLException, UnknownHostException{
-		PreparedStatement ps = connection.prepareStatement("UPDATE productos_propios SET precio = ?, precio2 = ?, precio3 = ?, precio4 = ?, precio5 = ? "+
-				" WHERE referencia = ? AND (precio != ? OR precio2 != ? OR precio3 != ? OR precio4 != ? OR precio5 != ?)");
-		PreparedStatement ps2 = connection.prepareStatement("UPDATE productos_competencia SET precio = ? "+
-				" WHERE codigo_hijo = ? AND precio != ? ");
-		PreparedStatement ps3 = connection.prepareStatement("INSERT INTO historico_comparaciones(referencia_propio,referencia_competencia,fecha_comparacion,precio_propio,descuento_propio,precio_competencia,descuento_competencia, descuento_propio2, descuento_competencia2, numero_precio) "+
-				"VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT (referencia_propio, referencia_competencia, fecha_comparacion) DO UPDATE SET descuento_propio=?, descuento_competencia=?, descuento_propio2=?, descuento_competencia2=?, numero_precio = ?");
+		productosCambiaron.clear();
+		productosCompetenciaCambiaron.clear();
+		CatalogoCatalogosPromocionales propioPersistence = new CatalogoCatalogosPromocionales(connection.getConnection());
+		CatalogoPromopciones competenciaPersistence = new CatalogoPromopciones(connection.getConnection());
+		ComparacionesPromopciones comparacionesPersistence = new ComparacionesPromopciones(connection.getConnection());
+		productosCambiaron.removeAll(productosCambiaron);
+		productosCompetenciaCambiaron.removeAll(productosCompetenciaCambiaron);
 		for(int i=0; i<listaComparaciones.getListaComparaciones().size();i++){
 			Comparacion comp = listaComparaciones.getListaComparaciones().get(i);
+			System.out.println(comp.getProductoPropio().getReferencia());
 			Producto propio = obtenerProductoPorReferencia(comp.getProductoPropio().getReferencia());
+			System.out.println(propio);
 			ProductoCompetencia competencia = obtenerProductoCompetencia(comp.getProductoCompetencia().getCodigoHijo());
-			ps.setDouble(1, propio.getPrecio1());
-			ps.setDouble(2, propio.getPrecio2());
-			ps.setDouble(3, propio.getPrecio3());
-			ps.setDouble(4, propio.getPrecio4());
-			ps.setDouble(5, propio.getPrecio5());
-			ps.setString(6, propio.getReferencia());
-			ps.setDouble(7, propio.getPrecio1());
-			ps.setDouble(8, propio.getPrecio2());
-			ps.setDouble(9, propio.getPrecio3());
-			ps.setDouble(10, propio.getPrecio4());
-			ps.setDouble(11, propio.getPrecio5());
-			ps2.setDouble(1, competencia.getPrecioBase());
-			ps2.setString(2, competencia.getCodigoHijo());
-			ps2.setDouble(3, competencia.getPrecioBase());
-			ps3.setString(1, comp.getProductoPropio().getReferencia());
-			ps3.setString(2, comp.getProductoCompetencia().getCodigoHijo());
-			ps3.setString(3, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-			ps3.setDouble(4, propio.getPrecio1());
-			ps3.setDouble(5, comp.getProductoPropio().getDescuento());
-			ps3.setDouble(6, competencia.getPrecioBase());
-			ps3.setDouble(7, comp.getProductoCompetencia().getDescuento());
-			ps3.setDouble(8, comp.getProductoPropio().getDescuento2());
-			ps3.setDouble(9, comp.getProductoCompetencia().getDescuento2());
-			ps3.setInt(10, comp.getNumeroPrecio());
-			ps3.setDouble(11, comp.getProductoPropio().getDescuento());
-			ps3.setDouble(12, comp.getProductoCompetencia().getDescuento());
-			ps3.setDouble(13, comp.getProductoPropio().getDescuento2());
-			ps3.setDouble(14, comp.getProductoCompetencia().getDescuento2());
-			ps3.setInt(15, comp.getNumeroPrecio());
-			int up1=ps.executeUpdate();
-			int up2=ps2.executeUpdate();
-			ps3.executeUpdate();
+			ArrayList<StockPromopcionesResponse> stockCompetencia = competenciaPersistence.getStockInformation(competencia.getCodigoPadre(), catalogoCompetencia);
+			competencia.processStock(stockCompetencia);
+			
+			ArrayList<Stock> stockPropio = getStocks(comp.getProductoPropio().getReferencia());
+			propioPersistence.deleteStockProducto(propio.getReferencia());
+			for (int j = 0; j < stockPropio.size(); j++) {
+				Stock propioStock = stockPropio.get(j);
+				propioPersistence.insertStockProducto(propioStock);
+			}
+			int up1=propioPersistence.updateProductosPropios(propio.getPrecio1(), propio.getPrecio2(), propio.getPrecio3(), propio.getPrecio4(), propio.getPrecio5(), propio.getReferencia());
+			int up2=0;
+			up2=competenciaPersistence.updateProductosCompetencia(competencia.getPrecioBase(),competencia.getCodigoHijo(),competencia.getStockString());
+			comparacionesPersistence.insertHistoricoComparacion(comp.getProductoPropio().getReferencia(), comp.getProductoCompetencia().getCodigoHijo(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()), propio.getPrecio1(), comp.getProductoPropio().getDescuento(), competencia.getPrecioBase(), comp.getProductoCompetencia().getDescuento(), comp.getProductoPropio().getDescuento2(),comp.getProductoCompetencia().getDescuento2(), comp.getNumeroPrecio());
+			int up3=0;
+			if((int) comp.getProductoCompetencia().getDescuento()!=(int) competencia.getDescuento()){
+				up3=comparacionesPersistence.updateDescuentoComparacion(comp.getProductoPropio().getDescuento(), competencia.getDescuento(), comp.getProductoPropio().getDescuento2(), comp.getProductoCompetencia().getDescuento2(), propio.getReferencia(), competencia.getCodigoHijo(), comp.getNumeroPrecio());
+			}
+			determinarSubio(comp.getProductoPropio(), propio, comp.getProductoCompetencia(), competencia, comp.getNumeroPrecio());
 			if(up1>0){
-				productosCambiaron.add(propio.getReferencia());
-			}if(up2>0){
-				productosCompetenciaCambiaron.add(competencia.getCodigoHijo());
+				productosCambiaron.add(propio);
+			}if(up2>0||up3>0){
+				productosCompetenciaCambiaron.add(competencia);
 			}
 		}
 		obtenerListaComparacionesBaseDeDatos();
 	}
-
-
-
-
 }

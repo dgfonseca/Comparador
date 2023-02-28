@@ -29,7 +29,7 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
         interfaz=pinterfaz;
         setBorder(BorderFactory.createLineBorder(Color.black));
         setLayout(new GridLayout(1,3,5,5));
-        btnBuscarProducto = new JButton("Buscar Producto");
+        btnBuscarProducto = new JButton("Buscar Producto Propio");
         btnBuscarProducto.setActionCommand("BUSCAR");
         btnBuscarProducto.addActionListener(this);
         add(btnBuscarProducto);

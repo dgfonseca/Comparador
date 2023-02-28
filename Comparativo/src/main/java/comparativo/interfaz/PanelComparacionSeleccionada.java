@@ -1,18 +1,24 @@
 package comparativo.interfaz;
 
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 
 import comparativo.mundo.model.Comparacion;
+import comparativo.mundo.model.ComparacionMarpico;
 
 import java.awt.*;
+import java.awt.event.*;
+import java.awt.event.ActionListener;
 
 
 public class PanelComparacionSeleccionada extends JPanel{
 
 
+    private InterfazComparativo interfaz;
     private final JLabel etNombre = new JLabel("Nombre: ");
     private JTextField txtNombre;
     private final JLabel etCodigoPromos = new JLabel("Codigo Promos:");
@@ -45,13 +51,23 @@ public class PanelComparacionSeleccionada extends JPanel{
     private final JLabel etDescuento2Competencia = new JLabel("Descuento 2 Competencia:");
     private JTextField txttDescuento2Competencia;
 
+    private final JLabel etStockPropio = new JLabel("Stock Propio:");
+    private final JButton btnStockPropio = new JButton("Abrir Stock Propio");
+    private JTextField txtStockPropio;
+    private final JLabel etStockCompetencia = new JLabel("Stock Competencia:");
+    private final JButton btnStockCompetencia = new JButton("Abrir Stock Competencia");
+    private JTextField txtStockCompetencia;
+    private JDialog dialog;
+
+
 
 
 
     public PanelComparacionSeleccionada(InterfazComparativo pInterfaz){
+        interfaz = pInterfaz;
         setLayout(new GridLayout(1,1));
         setBorder(new TitledBorder("Comparacion Seleccionada"));
-        JPanel p1 = new JPanel(new GridLayout(5,3,2,5));
+        JPanel p1 = new JPanel(new GridLayout(6,3,2,5));
         txtNombre = new JTextField("");
         txtNombre.setEditable(false);
         txtNombre.setBackground(Color.WHITE);
@@ -142,10 +158,56 @@ public class PanelComparacionSeleccionada extends JPanel{
         p1.add(etPrecioCompetenciaDescuento2);
         p1.add(txtPrecioCompetenciaDescuento2);
 
+        txtStockPropio = new JTextField("");
+        txtStockPropio.setEditable(false);
+        txtStockPropio.setBackground(Color.WHITE);
+        btnStockCompetencia.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                 dialog = new JDialog();
+                 dialog.setSize(450,175);
+                 dialog.setTitle("Stock Competencia");
+                 JPanel p3 = new JPanel(new BorderLayout());
+                 if(interfaz.getComparador().equalsIgnoreCase("Marpico")){
+                     p3.add(new JLabel("<html>"+interfaz.getComparacionMarpico().getProductoCompetencia().getStockToString().replace("\n", "<br>")+"</html>"),BorderLayout.CENTER);
+                    }else if(interfaz.getComparador().equals("Promopciones")){
+                     p3.add(new JLabel("<html>"+interfaz.getComparacionPromopciones().getProductoCompetencia().getStockString().replace("\n", "<br>")+"</html>"),BorderLayout.CENTER);
+                 }
+                 dialog.setLocationRelativeTo(null);
+                dialog.add(p3,BorderLayout.CENTER);
+                dialog.setVisible(true);
+            }
+        });
+        btnStockPropio.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                dialog = new JDialog();
+                dialog.setSize(800,200);
+                dialog.setTitle("Stock Propio");
+                JPanel p3 = new JPanel(new BorderLayout());
+                if(interfaz.getComparador().equalsIgnoreCase("Marpico")){
+                    p3.add(new JLabel("<html>"+interfaz.getComparacionMarpico().getProductoPropio().getStockToString().replace("\n", "<br>")+"</html>"),BorderLayout.CENTER);
+                   }else if(interfaz.getComparador().equals("Promopciones")){
+                    p3.add(new JLabel("<html>"+interfaz.getComparacionPromopciones().getProductoPropio().getStockToString().replace("\n", "<br>")+"</html>"),BorderLayout.CENTER);
+                }
+                dialog.setLocationRelativeTo(null);
+                dialog.add(p3,BorderLayout.CENTER);
+                dialog.setVisible(true);
+            }
+        });
+        p1.add(etStockPropio);
+        p1.add(btnStockPropio);
+
+        txtStockCompetencia = new JTextField("");
+        txtStockCompetencia.setEditable(false);
+        txtStockCompetencia.setBackground(Color.WHITE);
+        p1.add(etStockCompetencia);
+        p1.add(btnStockCompetencia);
+
         add(p1);
     }
 
-    public void refrescar(Comparacion comparacion){
+    public void refrescar(Comparacion comparacion,ComparacionMarpico marpico){
         if(comparacion!=null){
             txtNombre.setText(comparacion.getProductoPropio().getNombre());
             txtCodigoPromos.setText(comparacion.getProductoPropio().getReferencia());
@@ -160,6 +222,8 @@ public class PanelComparacionSeleccionada extends JPanel{
             txtPrecioCompetenciaDescuento2.setText(comparacion.getProductoCompetencia().getPrecioDescuento2()+"$");
             txttDescuento2Competencia.setText(comparacion.getProductoCompetencia().getDescuento2()+"%");
             txtDescuento2Promos.setText(comparacion.getProductoPropio().getDescuento2()+"%");
+            txtStockPropio.setText(comparacion.getProductoPropio().getStockToString());
+            txtStockCompetencia.setText(comparacion.getProductoCompetencia().getStockString());
             if(comparacion.getProductoPropio().getPrecio1()>comparacion.getProductoCompetencia().getPrecioBase()){
                 txtPrecioPromos.setBackground(Color.RED);
                 txtPrecioCompetencia.setBackground(Color.GREEN);
@@ -181,7 +245,45 @@ public class PanelComparacionSeleccionada extends JPanel{
                 txtPrecioPromosDescuento2.setBackground(Color.GREEN);
                 txtPrecioCompetenciaDescuento2.setBackground(Color.RED);
             }
-        }else{
+        }else if(marpico!=null){
+            txtNombre.setText(marpico.getProductoPropio().getNombre());
+            txtCodigoPromos.setText(marpico.getProductoPropio().getReferencia());
+            txtDescuentoPromos.setText(marpico.getProductoPropio().getDescuento()+"%");
+            txtCodigoCompetencia.setText(marpico.getProductoCompetencia().getFamilia());
+            txtDescuentoCompetencia.setText(marpico.getProductoCompetencia().getDescuento1()+"%");
+            txtPrecioPromos.setText(marpico.getProductoPropio().getPrecio1()+"$");
+            txtPrecioCompetencia.setText(marpico.getProductoCompetencia().getPrecio()+"$");
+            txtPrecioPromosDescuento.setText(marpico.getProductoPropio().getPrecioDescuento()+"$");
+            txtPrecioCompetenciaDescuento.setText(marpico.getProductoCompetencia().getDescuento2()+"$");
+            txtPrecioPromosDescuento2.setText(marpico.getProductoPropio().getPrecioDescuento2()+"$");
+            txtPrecioCompetenciaDescuento2.setText(marpico.getProductoCompetencia().getPrecioDescuento2()+"$");
+            txttDescuento2Competencia.setText(marpico.getProductoCompetencia().getDescuento2()+"%");
+            txtDescuento2Promos.setText(marpico.getProductoPropio().getDescuento2()+"%");
+            txtStockPropio.setText(marpico.getProductoPropio().getStockToString());
+            txtStockCompetencia.setText(marpico.getProductoCompetencia().getStockToString());
+            if(marpico.getProductoPropio().getPrecio1()>marpico.getProductoCompetencia().getPrecio()){
+                txtPrecioPromos.setBackground(Color.RED);
+                txtPrecioCompetencia.setBackground(Color.GREEN);
+            }
+            else{
+                txtPrecioPromos.setBackground(Color.GREEN);
+                txtPrecioCompetencia.setBackground(Color.RED);
+            }
+            if(marpico.getProductoPropio().getPrecioDescuento()>marpico.getProductoCompetencia().getPrecioDescuento1()){
+                txtPrecioPromosDescuento.setBackground(Color.RED);
+                txtPrecioCompetenciaDescuento.setBackground(Color.GREEN);
+            }else{
+                txtPrecioPromosDescuento.setBackground(Color.GREEN);
+                txtPrecioCompetenciaDescuento.setBackground(Color.RED);
+            }if(marpico.getProductoPropio().getPrecioDescuento2()>marpico.getProductoCompetencia().getPrecioDescuento2()){
+                txtPrecioPromosDescuento2.setBackground(Color.RED);
+                txtPrecioCompetenciaDescuento2.setBackground(Color.GREEN);
+            }else{
+                txtPrecioPromosDescuento2.setBackground(Color.GREEN);
+                txtPrecioCompetenciaDescuento2.setBackground(Color.RED);
+            }
+        }
+        else{
             txtNombre.setText("");
             txtCodigoPromos.setText("");
             txtDescuentoPromos.setText("");
@@ -195,6 +297,8 @@ public class PanelComparacionSeleccionada extends JPanel{
             txtPrecioPromosDescuento2.setText("");
             txtDescuento2Promos.setText("");
             txttDescuento2Competencia.setText("");
+            txtStockCompetencia.setText("");
+            txtStockPropio.setText("");
 
             txtPrecioPromos.setBackground(Color.WHITE);
             txtPrecioCompetencia.setBackground(Color.WHITE);
@@ -204,6 +308,8 @@ public class PanelComparacionSeleccionada extends JPanel{
             txtPrecioPromosDescuento2.setBackground(Color.WHITE);
             txtDescuento2Promos.setBackground(Color.WHITE);
             txttDescuento2Competencia.setBackground(Color.WHITE);
+            txtStockCompetencia.setBackground(Color.WHITE);
+            txtStockPropio.setBackground(Color.WHITE);
 
         }
     }

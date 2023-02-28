@@ -7,6 +7,7 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
@@ -24,6 +25,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import comparativo.mundo.model.Comparacion;
+import comparativo.mundo.model.ComparacionMarpico;
 import comparativo.mundo.model.ListaComparaciones;
 
 
@@ -41,6 +43,7 @@ public class PanelListaComparaciones extends JPanel{
     private DefaultTableModel modeloTabla;
     private JTable tabla;
     private TableRowSorter<TableModel> rowSorter;
+    
 
     public PanelListaComparaciones(InterfazComparativo pInterfaz){
         interfaz=pInterfaz;
@@ -181,26 +184,40 @@ public class PanelListaComparaciones extends JPanel{
         
     }
 
-    public void refrescar(ListaComparaciones lista){
+    public void refrescar(ListaComparaciones lista, ArrayList<ComparacionMarpico> listaMarpico){
         Comparacion comp = null;
+        ComparacionMarpico compMarpico=null;
         modeloTabla.setRowCount(0);
         if(interfaz.getEsHistorico()){
             this.setBorder(BorderFactory.createTitledBorder("Historico Comparaciones"));
         }else{
             this.setBorder(BorderFactory.createTitledBorder("Comparaciones"));
         }
-        for(int i =0; i<lista.getListaComparaciones().size();i++){
-            comp=lista.getListaComparaciones().get(i);
-            comp.getProductoPropio().getNombre();
-            modeloTabla.addRow(new Object[]{comp.getProductoPropio().getNombre(), comp.getProductoPropio().getReferencia(), comp.getProductoPropio().getDescuento(),comp.getProductoPropio().getDescuento2(),
-                comp.getProductoCompetencia().getCodigoHijo(),comp.getProductoCompetencia().getDescuento(),comp.getProductoCompetencia().getDescuento2(),comp.getProductoPropio().getPrecio1(), comp.getProductoCompetencia().getPrecioBase(),
-                comp.getProductoPropio().getPrecioDescuento(),comp.getProductoCompetencia().getPrecioDescuento(),comp.getProductoPropio().getPrecioDescuento2(),comp.getProductoCompetencia().getPrecioDescuento2()
-                ,comp.getFechaComparacion()!=null? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comp.getFechaComparacion()):new SimpleDateFormat("yyyy-MM-dd").format(new Date()),comp.getNumeroPrecio()
-            });
+        if(interfaz.getComparador().equalsIgnoreCase("Promopciones")){
+            for(int i =0; i<lista.getListaComparaciones().size();i++){
+                comp=lista.getListaComparaciones().get(i);
+                modeloTabla.addRow(new Object[]{comp.getProductoPropio().getNombre(), comp.getProductoPropio().getReferencia(), comp.getProductoPropio().getDescuento(),comp.getProductoPropio().getDescuento2(),
+                    comp.getProductoCompetencia().getCodigoHijo(),comp.getProductoCompetencia().getDescuento(),comp.getProductoCompetencia().getDescuento2(),comp.getProductoPropio().getPrecio1(), comp.getProductoCompetencia().getPrecioBase(),
+                    comp.getProductoPropio().getPrecioDescuento(),comp.getProductoCompetencia().getPrecioDescuento(),comp.getProductoPropio().getPrecioDescuento2(),comp.getProductoCompetencia().getPrecioDescuento2()
+                    ,comp.getFechaComparacion()!=null? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comp.getFechaComparacion()):new SimpleDateFormat("yyyy-MM-dd").format(new Date()),comp.getNumeroPrecio()
+                });
+            }
+            changeTable(tabla);
+            rowSorter = new TableRowSorter<>(tabla.getModel());
+            tabla.setRowSorter(rowSorter);
+        }else if(interfaz.getComparador().equalsIgnoreCase("Marpico")){
+            for(int i =0; i<listaMarpico.size();i++){
+                compMarpico=listaMarpico.get(i);
+                modeloTabla.addRow(new Object[]{compMarpico.getProductoPropio().getNombre(), compMarpico.getProductoPropio().getReferencia(), compMarpico.getProductoPropio().getDescuento(),compMarpico.getProductoPropio().getDescuento2(),
+                    compMarpico.getProductoCompetencia().getFamilia(),compMarpico.getProductoCompetencia().getDescuento1(),compMarpico.getProductoCompetencia().getDescuento2(),compMarpico.getProductoPropio().getPrecio1(), compMarpico.getProductoCompetencia().getPrecio(),
+                    compMarpico.getProductoPropio().getPrecioDescuento(),compMarpico.getProductoCompetencia().getPrecioDescuento1(),compMarpico.getProductoPropio().getPrecioDescuento2(),compMarpico.getProductoCompetencia().getPrecioDescuento2()
+                    ,compMarpico.getFechaComparacion()!=null? compMarpico.getFechaComparacion():new SimpleDateFormat("yyyy-MM-dd").format(new Date()),compMarpico.getNumeroPrecio()
+                });
+            }
+            changeTable(tabla);
+            rowSorter = new TableRowSorter<>(tabla.getModel());
+            tabla.setRowSorter(rowSorter);
         }
-        changeTable(tabla);
-        rowSorter = new TableRowSorter<>(tabla.getModel());
-        tabla.setRowSorter(rowSorter);
     }
 
     private JTextField createTextField() {

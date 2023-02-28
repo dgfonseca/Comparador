@@ -1,20 +1,35 @@
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelCredenciales.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelListaCategoriasPropios.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\mundo\response\CategoriaResponse.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\mundo\model\Producto.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelMenuOpcionesComparaciones.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\mundo\model\ProductoCompetencia.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelListaProductosPropios.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\InterfazComparativo.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\mundo\model\Comparacion.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\mundo\response\ProductosResponse.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelListaProductosCompetencia.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelComparacionSeleccionada.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\mundo\model\Catalogo.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\mundo\model\ListaComparaciones.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\mundo\model\Categoria.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\mundo\ComparativoMundo.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelMenuOpcionesComparacion.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelMenuOpciones.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelListaComparaciones.java
-C:\Users\Administrador\Desktop\Propuesta gustavo\Comparativo\src\main\java\comparativo\interfaz\PanelProductosSeleccionados.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\persistence\CatalogoCatalogosPromocionales.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\response\InventarioTransitoMarpico.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\response\MaterialesMarpico.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\InterfazComparativo.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelListaComparaciones.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\model\ProductoCompetencia.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\ComparativoMundo.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelMenuOpciones.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelListaCategoriasPropios.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelListaProductosCompetencia.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\persistence\CatalogoMarpicoPersistence.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\response\StockPromopcionesResponse.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\persistence\ComparacionesPromopciones.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelListaProductosPropios.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelComparacionSeleccionada.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelMenuOpcionesProductosSeleccionados.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\model\Catalogo.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\model\Comparacion.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\model\Producto.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\persistence\ProductosMarpico.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\response\ProductosResponse.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelMenuOpcionesComparacion.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\model\ComparacionMarpico.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\persistence\ComparacionesMarpico.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\model\Stock.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\model\Categoria.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\response\CategoriaResponse.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelCredenciales.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\model\ListaComparaciones.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\response\StockResponse.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\response\CatalogoMarpico.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\interfaz\PanelProductosSeleccionados.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\persistence\CatalogoPromopciones.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\persistence\DataBaseConection.java
+C:\Users\Administrador\Desktop\Comparador\Comparativo\src\main\java\comparativo\mundo\ComparativoMarpicoMundo.java

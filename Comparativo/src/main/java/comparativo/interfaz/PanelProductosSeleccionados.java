@@ -8,6 +8,7 @@ import javax.swing.border.TitledBorder;
 import comparativo.mundo.model.Categoria;
 import comparativo.mundo.model.Producto;
 import comparativo.mundo.model.ProductoCompetencia;
+import comparativo.mundo.persistence.ProductosMarpico;
 
 import java.awt.*;
 
@@ -135,7 +136,13 @@ public class PanelProductosSeleccionados extends JPanel {
         add(p2);  
     }
 
-    public void refrescar(Producto propio, ProductoCompetencia competencia, Categoria categoria){
+    public void refrescar(Producto propio, ProductoCompetencia competencia, Categoria categoria,ProductosMarpico marpico){
+        if(marpico!=null){
+            txtCodigoHijo.setText(marpico.getFamilia());
+            txtCodigoPadre.setText(marpico.getFamilia());
+            txtNombreComp.setText(marpico.getDescripcion_comercial());
+            txtPrecioComp.setText(marpico.getPrecioCalculado());
+        }
         if(propio!=null){
             txtReferencia.setText(propio.getReferencia());
             txtNombre.setText(propio.getNombre());
@@ -150,7 +157,7 @@ public class PanelProductosSeleccionados extends JPanel {
             txtCodigoPadre.setText(competencia.getCodigoPadre());
             txtNombreComp.setText(competencia.getNombre());
             txtPrecioComp.setText(competencia.getPrecioBase()+"$");
-        }if(propio==null && competencia==null){
+        }if(propio==null && competencia==null && marpico==null){
             txtReferencia.setText("");
             txtNombre.setText("");
             txtCategoria.setText("");
@@ -160,6 +167,10 @@ public class PanelProductosSeleccionados extends JPanel {
             txtCodigoPadre.setText("");
             txtNombreComp.setText("");
             txtPrecioComp.setText("");
+            txtPrecio2.setText("");
+            txtPrecio3.setText("");
+            txtPrecio4.setText("");
+            txtPrecio5.setText("");
         }
 
     }

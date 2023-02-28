@@ -4,11 +4,41 @@ import java.util.ArrayList;
 
 public class MaterialesMarpico {
     
+    private int codigo;
+    private String variedad;
     private String color_nombre;
     private ArrayList<InventarioTransitoMarpico> trackings_importacion;
     private double precio;
     private double descuento;
     private int inventario;
+
+    public MaterialesMarpico(){
+
+    }
+    public MaterialesMarpico(int pCodigo,String pColor, ArrayList<InventarioTransitoMarpico> importacion, double pprecio, double pdescuento, int pinventario, String pVariedad){
+        this.color_nombre=pColor;
+        this.trackings_importacion=importacion;
+        this.precio=pprecio;
+        this.descuento=pdescuento;
+        this.inventario=pinventario;
+        this.variedad=pVariedad;
+        this.codigo=pCodigo;
+    }
+
+    public int getCodigo() {
+        return this.codigo;
+    }
+
+    public void setCodigo(int codigo) {
+        this.codigo = codigo;
+    }
+    public String getVariedad() {
+        return this.variedad;
+    }
+
+    public void setVariedad(String variedad) {
+        this.variedad = variedad;
+    }
 
     public String getColor_nombre() {
         return this.color_nombre;
@@ -48,6 +78,14 @@ public class MaterialesMarpico {
 
     public void setInventario(int inventario) {
         this.inventario = inventario;
+    }
+
+    public String getStockTransito(){
+        String rta = "";
+        for (int i = 0; i < trackings_importacion.size(); i++) {
+            rta+="| Inventario en transito: "+trackings_importacion.get(i).getCantidad() +", Fecha: "+trackings_importacion.get(i).getFecha() +", Ultima Actualización: "+trackings_importacion.get(i).getUltima_actualizacion()+" | ";
+        }
+        return rta;
     }
 
 

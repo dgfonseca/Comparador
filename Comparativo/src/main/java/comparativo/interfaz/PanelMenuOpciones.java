@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 
 public class PanelMenuOpciones extends JPanel implements ActionListener{
 
-    private static InterfazComparativo ventanaPrincipal;
+    private InterfazComparativo ventanaPrincipal;
     private JButton botonProductosCompetencia;
     private JButton botonProductos;
     private JButton botonComparaciones;
@@ -47,7 +47,8 @@ public class PanelMenuOpciones extends JPanel implements ActionListener{
 
     }
 
-    private static void backgroundLoad(String path){
+    @SuppressWarnings("rawtypes")
+    private void backgroundLoad(String path){
         final String ppath = path;
 
         SwingWorker sw1 = new SwingWorker() {
@@ -75,17 +76,21 @@ public class PanelMenuOpciones extends JPanel implements ActionListener{
     public void actionPerformed(ActionEvent e) {
 
         if("A".equals(e.getActionCommand())){
-            JFileChooser fc = new JFileChooser();
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivos Excel", "xlsx");
-            fc.setFileFilter(filter);
-            fc.setDialogTitle( "Buscar Archivo excel" );
-            fc.setMultiSelectionEnabled( false );
-
-            int resultado = fc.showOpenDialog( this );
-            if( resultado == JFileChooser.APPROVE_OPTION )
-            {
-                String path = fc.getSelectedFile( ).getAbsolutePath( );
-                backgroundLoad(path);                
+            if(ventanaPrincipal.getComparador().equalsIgnoreCase("Promopciones")){
+                JFileChooser fc = new JFileChooser();
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivos Excel", "xlsx");
+                fc.setFileFilter(filter);
+                fc.setDialogTitle( "Buscar Archivo excel" );
+                fc.setMultiSelectionEnabled( false );
+    
+                int resultado = fc.showOpenDialog( this );
+                if( resultado == JFileChooser.APPROVE_OPTION )
+                {
+                    String path = fc.getSelectedFile( ).getAbsolutePath( );
+                    backgroundLoad(path);                
+                }
+            }else{
+                backgroundLoad("Marpico");
             }
         }
         if("B".equals(e.getActionCommand())){

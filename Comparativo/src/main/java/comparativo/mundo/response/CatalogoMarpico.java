@@ -2,6 +2,8 @@ package comparativo.mundo.response;
 
 import java.util.ArrayList;
 
+import comparativo.mundo.persistence.ProductosMarpico;
+
 public class CatalogoMarpico {
     
     private ArrayList<ProductosMarpico> results;

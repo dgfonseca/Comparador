@@ -2,6 +2,7 @@ package comparativo.mundo.model;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 
 public class Producto {
 
@@ -12,13 +13,13 @@ public class Producto {
 	private double precio3;
 	private double precio4;
 	private double precio5;
-
-	
-
 	private double descuento;
 	private double descuento2;
-	
-	public Producto(String pNombre, String pReferencia, double pPrecio, double pPrecio2, double pPrecio3, double pPrecio4, double pPrecio5) {
+	private ArrayList<Stock> stock;
+
+	private int indicadorSubio;
+
+	public Producto(String pNombre, String pReferencia, double pPrecio, double pPrecio2, double pPrecio3, double pPrecio4, double pPrecio5, ArrayList<Stock> pStock) {
 		super();
 		this.nombre = pNombre;
 		this.referencia = pReferencia;
@@ -29,8 +30,10 @@ public class Producto {
 		this.precio5 = pPrecio5;
 		this.descuento = 35;
 		this.descuento2 = 0;
+		this.stock=pStock;
+		this.indicadorSubio=0;
 	}
-	public Producto(String pNombre, String pReferencia, double pPrecio, double pPrecio2, double pPrecio3, double pPrecio4, double pPrecio5, double pDescuento, double pDescuento2) {
+	public Producto(String pNombre, String pReferencia, double pPrecio, double pPrecio2, double pPrecio3, double pPrecio4, double pPrecio5, double pDescuento, double pDescuento2, ArrayList<Stock> pStock) {
 		super();
 		this.nombre = pNombre;
 		this.referencia = pReferencia;
@@ -41,6 +44,16 @@ public class Producto {
 		this.precio5 = pPrecio5;
 		this.descuento = pDescuento;
 		this.descuento2 = pDescuento2;
+		this.stock=pStock;
+		this.indicadorSubio=0;
+	}
+
+	public int getIndicadorSubio() {
+		return this.indicadorSubio;
+	}
+
+	public void setIndicadorSubio(int indicadorSubio) {
+		this.indicadorSubio = indicadorSubio;
 	}
 
 	public double getPrecioDescuento2(){
@@ -148,6 +161,25 @@ public class Producto {
 
 	public String toString() {
 		return getReferencia() + "     --     " + getNombre();
+	}
+
+	public ArrayList<Stock> getStock() {
+		return this.stock;
+	}
+
+	public void setStock(ArrayList<Stock> stock) {
+		this.stock = stock;
+	}
+
+	public String getStockToString(){
+
+		String string="";
+		if(this.stock!=null){
+			for (int i = 0; i < this.stock.size(); i++) {
+				string+=""+this.stock.get(i).toString()+"\n";
+			}
+		}
+		return string;
 	}
 
 }
