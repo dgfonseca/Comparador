@@ -1,7 +1,6 @@
 package comparativo.mundo.model;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.math.*;
 import java.util.ArrayList;
 
 public class Producto {
@@ -153,10 +152,7 @@ public class Producto {
 	}
 
 	public static double round(double value) {
-	
-		BigDecimal bd = BigDecimal.valueOf(value);
-		bd = bd.setScale(2, RoundingMode.HALF_UP);
-		return bd.doubleValue();
+		return Math.ceil(value);
 	}
 
 	public String toString() {

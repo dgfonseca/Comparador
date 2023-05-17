@@ -33,7 +33,7 @@ public class MaterialesMarpico {
         this.codigo = codigo;
     }
     public String getVariedad() {
-        return this.variedad;
+        return this.variedad==null?"":this.variedad;
     }
 
     public void setVariedad(String variedad) {
@@ -83,7 +83,7 @@ public class MaterialesMarpico {
     public String getStockTransito(){
         String rta = "";
         for (int i = 0; i < trackings_importacion.size(); i++) {
-            rta+="| Inventario en transito: "+trackings_importacion.get(i).getCantidad() +", Fecha: "+trackings_importacion.get(i).getFecha() +", Ultima Actualización: "+trackings_importacion.get(i).getUltima_actualizacion()+" | ";
+            rta+="| Inventario en transito: "+trackings_importacion.get(i).getCantidad() +", Fecha: "+trackings_importacion.get(i).getFecha();
         }
         return rta;
     }

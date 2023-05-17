@@ -94,8 +94,8 @@ public class Stock {
 
     @Override
     public String toString(){
-        return "Referencia: "+ getReferencia() +", Color: "+getColor() + ", Total Disponible: "+ getTotalDisponible() 
-        +", Llegada Bodega Local: " + getLlegadaBodegaLocal() +", Cantidad Transito: "+ getCantidadTransito();
+        return getReferencia()+", "+getColor() + ", Disponible: "+ getTotalDisponible() 
+        +", Llegada: " + getLlegadaBodegaLocal() +", Transito: "+ getCantidadTransito();
     }
     
     

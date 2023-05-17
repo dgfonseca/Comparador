@@ -1,7 +1,7 @@
 package comparativo.mundo.model;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.math.*;
 import java.util.ArrayList;
 
 import comparativo.mundo.response.StockPromopcionesResponse;
@@ -119,15 +119,11 @@ public class ProductoCompetencia {
 
 
     public static double round(double value) {
-    
-        BigDecimal bd = BigDecimal.valueOf(value);
-        bd = bd.setScale(2, RoundingMode.HALF_UP);
-        return bd.doubleValue();
+        return Math.ceil(value);
     }
     
     public void processStock(ArrayList<StockPromopcionesResponse> stockResponse){
 
-        double mayorDescuento = 0;
         this.stockString="";
         for (StockPromopcionesResponse stockPromopcionesResponse : stockResponse) {
             int inventarioTotal = (stockPromopcionesResponse.getStock_total());
@@ -154,13 +150,10 @@ public class ProductoCompetencia {
             }if(indexInicioPrecioBase>0&&indexFinPrecioBase>0){
                 this.precioBase=Double.parseDouble(html2.substring(indexInicioPrecioBase+1, indexFinPrecioBase).replace(",", ""));
             }if(indexInicioPrecioDescuento>0&&indexFinPrecioDescuento>0){
-                double precioDescuento = Double.parseDouble(html2.substring(indexInicioPrecioDescuento+1, indexFinPrecioDescuento).replace(",", "").replace(".",""));
+                double precioDescuento = Double.parseDouble(html2.substring(indexInicioPrecioDescuento+1, indexFinPrecioDescuento).replace(",", ""));
                 double descuento = 100-(precioDescuento*100/this.precioBase);
-                if(mayorDescuento<descuento){
-                    mayorDescuento=descuento;
-                }
+                this.descuento=descuento;
             }
-            this.descuento=mayorDescuento;
             this.stockString+="Codigo: "+stockPromopcionesResponse.getCodigoHijo()+", Inventario Total: "+inventarioTotal+", Inventario Transito: "+inventarioTransito+", Fecha Arribo Bodega: "+fechaArriboBodega+"\n";
         }
     }

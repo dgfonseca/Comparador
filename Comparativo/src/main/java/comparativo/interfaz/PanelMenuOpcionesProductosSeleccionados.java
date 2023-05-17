@@ -9,6 +9,9 @@ import javax.swing.JTextField;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements ActionListener{
 
@@ -24,6 +27,9 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
     JButton boton3;
     JButton boton4;
     JButton boton5;
+
+    private int numeroPrecio = 1;
+    private int numeroMaterial = -1;
 
     public PanelMenuOpcionesProductosSeleccionados(InterfazComparativo pinterfaz){
         interfaz=pinterfaz;
@@ -58,20 +64,64 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
                 public void actionPerformed(ActionEvent event) {
                     
                     if("1".equals(event.getActionCommand())){
-                        interfaz.crearComparacion(1);
+                        numeroPrecio=1;
                     }if("2".equals(event.getActionCommand())){
-                        interfaz.crearComparacion(2);
+                        numeroPrecio=2;
                     }if("3".equals(event.getActionCommand())){
-                        interfaz.crearComparacion(3);
+                        numeroPrecio=3;
                     }if("4".equals(event.getActionCommand())){
-                        interfaz.crearComparacion(4);
+                        numeroPrecio=4;
                     }if("5".equals(event.getActionCommand())){
-                        interfaz.crearComparacion(5);
+                        numeroPrecio=5;
                     }
                     dialog.dispose();
+                    if(interfaz.getProductoMarpicoSeleccionado()!=null){
+                        if(interfaz.getProductoMarpicoSeleccionado().getMaterialPrecios().size()>1){
+                            Map<Integer,Double> precios = interfaz.getProductoMarpicoSeleccionado().getMaterialPrecios();
+                            ArrayList<Integer> keyList = new ArrayList<Integer>(precios.keySet());
+        
+                            dialog = new JDialog();
+            
+                            dialog.setSize(500,170);
+        
+                            dialog.setTitle("Seleccionar precio competencia a comparar");
+                            JPanel p3 = new JPanel(new GridLayout(1,precios.size()));
+                            ActionListener actionListener2 = new ActionListener() {
+                                public void actionPerformed(ActionEvent event) {
+                                    
+                                    numeroMaterial = Integer.parseInt(event.getActionCommand());
+                                    interfaz.crearComparacion(numeroPrecio,numeroMaterial);
+                                    numeroMaterial=-1;
+                                    numeroPrecio=1;
+                                    dialog.dispose();
+                                }
+                            };
+                            for (int i = 0; i < keyList.size(); i++) {
+                                JButton boton = new JButton("Precio: "+precios.get(keyList.get(i)));
+                                boton.setActionCommand(keyList.get(i)+"");
+                                boton.addActionListener(actionListener2);
+                                p3.add(boton);
+                            }
+                            JPanel p1 = new JPanel();
+                            p1.add(p3);
+                            dialog.setLayout(new BorderLayout());
+                            dialog.add(p1,BorderLayout.CENTER);
+                            dialog.add(new JPanel(), BorderLayout.EAST);
+                            dialog.add(new JLabel("Seleccione el precio propio a comparar"), BorderLayout.NORTH);
+                            dialog.setLocationRelativeTo(null);
+                            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                            dialog.setVisible(true);
+                        }
+                        else{
+                            interfaz.crearComparacion(numeroPrecio,numeroMaterial);
+                            numeroMaterial=-1;
+                            numeroPrecio=1;
+                        }
+                    }
                 }
             };
 
+            
             boton1 = new JButton("Precio 1");
             boton2 = new JButton("Precio 2");
             boton3 = new JButton("Precio 3");
@@ -98,19 +148,57 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
             p3.add(boton5);
             
 
-            
-
             JPanel p1 = new JPanel();
             p1.add(p3);
             dialog.setLayout(new BorderLayout());
             dialog.add(p1,BorderLayout.CENTER);
             dialog.add(new JPanel(), BorderLayout.EAST);
-            dialog.add(new JLabel("Seleccione el precio a comparar"), BorderLayout.NORTH);
+            dialog.add(new JLabel("Seleccione el precio propio a comparar"), BorderLayout.NORTH);
             dialog.setLocationRelativeTo(null);
             dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
             dialog.setVisible(true);
-            }else{
-                interfaz.crearComparacion(1);
+            }else if(interfaz.getProductoMarpicoSeleccionado()!=null) {
+                if(interfaz.getProductoMarpicoSeleccionado().getMaterialPrecios().size()>1){
+                    Map<Integer,Double> precios = interfaz.getProductoMarpicoSeleccionado().getMaterialPrecios();
+                    ArrayList<Integer> keyList = new ArrayList<Integer>(precios.keySet());
+                    
+                    dialog = new JDialog();
+                    
+                    dialog.setSize(500,170);
+                    
+                    dialog.setTitle("Seleccionar precio competencia a comparar");
+                    JPanel p3 = new JPanel(new GridLayout(1,precios.size()));
+                    ActionListener actionListener2 = new ActionListener() {
+                        public void actionPerformed(ActionEvent event) {
+                            
+                            numeroMaterial = Integer.parseInt(event.getActionCommand());
+                            interfaz.crearComparacion(numeroPrecio,numeroMaterial);
+                            numeroMaterial=-1;
+                            numeroPrecio=1;
+                            dialog.dispose();
+                        }
+                    };
+                    for (int i = 0; i < keyList.size(); i++) {
+                        JButton boton = new JButton("Precio: "+precios.get(keyList.get(i)));
+                        boton.setActionCommand(keyList.get(i)+"");
+                        boton.addActionListener(actionListener2);
+                        p3.add(boton);
+                    }
+                    JPanel p1 = new JPanel();
+                    p1.add(p3);
+                    dialog.setLayout(new BorderLayout());
+                    dialog.add(p1,BorderLayout.CENTER);
+                    dialog.add(new JPanel(), BorderLayout.EAST);
+                    dialog.add(new JLabel("Seleccione el precio propio a comparar"), BorderLayout.NORTH);
+                    dialog.setLocationRelativeTo(null);
+                    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                    dialog.setVisible(true);
+                }
+            }
+            else{
+                interfaz.crearComparacion(numeroPrecio,numeroMaterial);
+                            numeroMaterial=-1;
+                            numeroPrecio=1;
             }
 
         }if("ELIMINAR".equals(e.getActionCommand())){

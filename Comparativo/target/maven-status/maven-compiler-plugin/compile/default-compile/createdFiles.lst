@@ -4,7 +4,6 @@ comparativo\interfaz\PanelListaProductosPropios$1.class
 comparativo\interfaz\PanelListaComparaciones$8.class
 comparativo\mundo\persistence\DataBaseConection.class
 comparativo\mundo\response\InventarioTransitoMarpico.class
-comparativo\mundo\persistence\ComparacionesMarpico.class
 comparativo\mundo\ComparativoMundo.class
 comparativo\mundo\persistence\CatalogoCatalogosPromocionales.class
 comparativo\mundo\ComparativoMundo$Campos.class

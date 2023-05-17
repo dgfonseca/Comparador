@@ -196,8 +196,13 @@ public class ComparativoMarpicoMundo {
 		for(int i = 0; i< comparaciones.size(); i++){
 			ComparacionMarpico comparacion = comparaciones.get(i);
 
-			Producto productoPropio =
-			mundo.obtenerProductoPorReferencia(comparacion.getProductoPropio().getReferencia());
+			System.out.println("Actualizando Comparacion :::: Producto "+i+" De "+comparaciones.size()+" :::: Producto propio: "+comparacion.getProductoPropio().getReferencia() + " Producto Competencia: "+comparacion.getProductoCompetencia().getFamilia());
+
+			 Producto productoPropio =
+			 mundo.obtenerProductoPorReferencia(comparacion.getProductoPropio().getReferencia());
+	         productoPropio = productoPropio == null ? comparacion.getProductoPropio():productoPropio;
+
+			// Producto productoPropio = comparacion.getProductoPropio();
 			double precio=productoPropio.getPrecio1();;
 			if(comparacion.getNumeroPrecio()==2){
 				precio=productoPropio.getPrecio2();
@@ -212,15 +217,20 @@ public class ComparativoMarpicoMundo {
 				precio=productoPropio.getPrecio5();
 			}
 
-			ArrayList<Stock> stockPropio = getStocks(comparacion.getProductoPropio().getReferencia());
-			propioPersistence.deleteStockProducto(productoPropio.getReferencia());
-			for (int j = 0; j < stockPropio.size(); j++) {
-				Stock propioStock = stockPropio.get(j);
-				propioPersistence.insertStockProducto(propioStock);
-			}
+			 ArrayList<Stock> stockPropio = getStocks(comparacion.getProductoPropio().getReferencia());
+			 propioPersistence.deleteStockProducto(productoPropio.getReferencia());
+			 for (int j = 0; j < stockPropio.size(); j++) {
+			 	Stock propioStock = stockPropio.get(j);
+			 	propioPersistence.insertStockProducto(propioStock);
+			 }
 
 			ProductosMarpico productoCompetencia = buscarProductoPorFamilia(comparacion.getProductoCompetencia().getFamilia());
-			setMenorPrecio(productoCompetencia);
+			productoCompetencia = productoCompetencia == null ? comparacion.getProductoCompetencia():productoCompetencia;
+			if(comparacion.getNumeroPrecioMarpico()!=-1 && comparacion.getNumeroPrecioMarpico() != 1){
+				productoCompetencia.setPrecioDeMaterial(comparacion.getNumeroPrecioMarpico());
+			}else{
+				productoCompetencia = setMenorPrecio(productoCompetencia);
+			}
 			for(int j = 0; j<productoCompetencia.getMateriales().size();j++){
 				MaterialesMarpico material = productoCompetencia.getMateriales().get(j);
 				marpicoPersistence.insertMaterialesMarpico(material, comparacion.getProductoCompetencia().getFamilia());
@@ -460,17 +470,19 @@ public class ComparativoMarpicoMundo {
 			double precioMaterial;
 			double descuentoMaterial;
 			int inventarioMaterial;
+			String variedad;
 
 			while (rs2.next()) {
 				identificador = ((BigDecimal) rs2.getObject(1) == null ? -1
 						: ((BigDecimal) rs2.getObject(1)).intValue());
 				colorNombre = (String) rs2.getObject(2);
 				precioMaterial = ((BigDecimal) rs2.getObject(3)) == null ? 0
-						: ((BigDecimal) rs.getObject(3)).doubleValue();
+						: ((BigDecimal) rs2.getObject(3)).doubleValue();
 				descuentoMaterial = ((BigDecimal) rs2.getObject(4)) == null ? 0
-						: ((BigDecimal) rs.getObject(4)).doubleValue();
+						: ((BigDecimal) rs2.getObject(4)).doubleValue();
 				inventarioMaterial = ((BigDecimal) rs2.getObject(5) == null ? -1
 						: ((BigDecimal) rs2.getObject(5)).intValue());
+				variedad = (String) rs2.getObject(6);
 
 				ResultSet rs3 = catalogoMarpicoPersistence.getInventarios(identificador);
 				ArrayList<InventarioTransitoMarpico> inventariosTransito = new ArrayList<>();
@@ -486,11 +498,14 @@ public class ComparativoMarpicoMundo {
 					inventariosTransito.add(new InventarioTransitoMarpico(fecha, cantidad, ultimaActualizacion));
 				}
 				materiales.add(new MaterialesMarpico(identificador, colorNombre, inventariosTransito, precioMaterial,
-						descuentoMaterial, inventarioMaterial, ""));
+						descuentoMaterial, inventarioMaterial, variedad));
 			}
 
 			ProductosMarpico competencia = new ProductosMarpico(referenciaCompetencia, descripcion_comercial,
 					materiales, precioCompetencia, descuentoCompetencia, descuentoCompetencia2);
+					if(numeroPrecioMarpico!=-1){
+						competencia.setPrecioDeMaterial(numeroPrecioMarpico);
+					}
 			propio.setDescuento(descuentoPropio);
 			comparaciones.add(new ComparacionMarpico(competencia, propio, null,
 					numeroPrecio, numeroPrecioMarpico));
@@ -513,25 +528,36 @@ public class ComparativoMarpicoMundo {
 
 	}
 
-	public void setMenorPrecio(ProductosMarpico productoCompetencia){
-		ArrayList<MaterialesMarpico> materiales = productoCompetencia.getMateriales();
-		double precio=Double.POSITIVE_INFINITY;
-		double descuento=0;
-		for (MaterialesMarpico materialesMarpico : materiales) {
-			if(materialesMarpico.getPrecio()<precio){
-				precio=materialesMarpico.getPrecio();
-			}
-			if(materialesMarpico.getDescuento()>descuento){
-				descuento=materialesMarpico.getDescuento();
-			}
-		}
-		productoCompetencia.setPrecio(precio);
-		productoCompetencia.setDescuento1(descuento);
+	public ProductosMarpico setMenorPrecio(ProductosMarpico productoCompetencia){
+	    if(productoCompetencia!=null) {
+	        ArrayList<MaterialesMarpico> materiales = productoCompetencia.getMateriales();
+	        double descuento=productoCompetencia.getDescuento1();
+	        double precio = productoCompetencia.getPrecio();
+	        for (MaterialesMarpico materialesMarpico : materiales) {
+	            if(productoCompetencia.getPrecio()==0&&materialesMarpico.getPrecio()!=0){
+	                productoCompetencia.setPrecio(materialesMarpico.getPrecio());
+	            }
+	            if(materialesMarpico.getPrecio()<productoCompetencia.getPrecio()){
+	                productoCompetencia.setPrecio(materialesMarpico.getPrecio());
+	            }
+	            if(materialesMarpico.getDescuento()>descuento){
+	                descuento=materialesMarpico.getDescuento();
+	            }
+	        }
+	        System.out.println("Actualizar Comparaciones :::: "+productoCompetencia.getFamilia()+" :::: Menor Precio :::: Precio Nuevo: "+productoCompetencia.getPrecio()+" Precio Anterior: "+ precio);
+	        productoCompetencia.setDescuento1(descuento);
+	    }
+		return productoCompetencia;
 	}
 
 	public ComparacionMarpico crearComparacion(Producto productoPropio, ProductosMarpico productoCompetencia,
-			String fecha, int pPrecio) throws SQLException {
-		setMenorPrecio(productoCompetencia);
+			String fecha, int pPrecio,int numeroMaterial) throws SQLException {
+		if(numeroMaterial!=-1){
+			productoCompetencia.setPrecioDeMaterial(numeroMaterial);
+		}else{
+			setMenorPrecio(productoCompetencia);
+			productoCompetencia.setPrecioDeMaterial(numeroMaterial);
+		}
 		CatalogoMarpicoPersistence marpicoPersistence = new CatalogoMarpicoPersistence(this.connection.getConnection());
 		CatalogoCatalogosPromocionales propioPersistence = new CatalogoCatalogosPromocionales(
 				this.connection.getConnection());
@@ -571,12 +597,12 @@ public class ComparativoMarpicoMundo {
 		if (pPrecio == 5) {
 			precioPropio = productoPropio.getPrecio5();
 		}
-		marpicoPersistence.insertComparacion(productoPropio, productoCompetencia, pPrecio, 1);
+		marpicoPersistence.insertComparacion(productoPropio, productoCompetencia, pPrecio, numeroMaterial);
 
-		marpicoPersistence.insertHistoricoComparacion(productoPropio, productoCompetencia, pPrecio, 1, precioPropio);
+		marpicoPersistence.insertHistoricoComparacion(productoPropio, productoCompetencia, pPrecio, numeroMaterial, precioPropio);
 
 		ComparacionMarpico comparacion = new ComparacionMarpico(productoCompetencia, productoPropio, fecha, pPrecio,
-				1);
+				numeroMaterial);
 		comparaciones.add(comparacion);
 		return comparacion;
 	}
@@ -671,12 +697,13 @@ public class ComparativoMarpicoMundo {
 		row.createCell(8).setCellValue("Precio competencia");
 		row.createCell(9).setCellValue("Precio promos descuento");
 		row.createCell(10).setCellValue("Precio competencia descuento");
-		row.createCell(11).setCellValue("Precio promos descuento 2");
-		row.createCell(12).setCellValue("Precio competencia descuento 2");
-		row.createCell(13).setCellValue("Fecha");
-		row.createCell(14).setCellValue("Numero Precio");
-		row.createCell(15).setCellValue("Inventario Propio");
-		row.createCell(16).setCellValue("Inventario Competencia");
+		row.createCell(11).setCellValue("Estado");
+		row.createCell(12).setCellValue("Precio promos descuento 2");
+		row.createCell(13).setCellValue("Precio competencia descuento 2");
+		row.createCell(14).setCellValue("Fecha");
+		row.createCell(15).setCellValue("Numero Precio");
+		row.createCell(16).setCellValue("Inventario Propio");
+		row.createCell(17).setCellValue("Inventario Competencia");
 		CellStyle green = workbook.createCellStyle();
 		green.setFillForegroundColor(IndexedColors.GREEN.getIndex());
 		green.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -700,13 +727,13 @@ public class ComparativoMarpicoMundo {
 			row.createCell(4).setCellValue(comparacion.getProductoCompetencia().getFamilia());
 			row.createCell(5).setCellValue(comparacion.getProductoCompetencia().getDescuento1());
 			row.createCell(6).setCellValue(comparacion.getProductoCompetencia().getDescuento2());
-			row.createCell(13).setCellValue(comparacion.getFechaComparacion()!=null ? comparacion.getFechaComparacion(): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-			row.createCell(14).setCellValue(comparacion.getNumeroPrecio());
+			row.createCell(14).setCellValue(comparacion.getFechaComparacion()!=null ? comparacion.getFechaComparacion(): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+			row.createCell(15).setCellValue(comparacion.getNumeroPrecio());
 			
-			Cell stock1 = row.createCell(15);
+			Cell stock1 = row.createCell(16);
 			stock1.setCellValue(comparacion.getProductoPropio().getStockToString());
 			stock1.setCellStyle(cellStyle);
-			Cell stock2 =row.createCell(16);
+			Cell stock2 =row.createCell(17);
 			stock2.setCellValue(comparacion.getProductoCompetencia().getStockToString());
 			stock2.setCellStyle(cellStyle);
 			row.setHeight((short) -1);
@@ -733,6 +760,8 @@ public class ComparativoMarpicoMundo {
 				Cell precioCompetencia=row.createCell(10);
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento1());
 				precioCompetencia.setCellStyle(green);
+				Cell estado = row.createCell(11);
+				estado.setCellValue("CARO");
 			}else{
 				Cell precioPropio=row.createCell(9);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento());
@@ -740,26 +769,28 @@ public class ComparativoMarpicoMundo {
 				Cell precioCompetencia=row.createCell(10);
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento1());
 				precioCompetencia.setCellStyle(red);
+				Cell estado = row.createCell(11);
+                estado.setCellValue("ok");
 			}
 			if(comparacion.getProductoPropio().getPrecioDescuento2()>comparacion.getProductoCompetencia().getPrecioDescuento2()){
-				Cell precioPropio=row.createCell(11);
+				Cell precioPropio=row.createCell(12);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento2());
 				precioPropio.setCellStyle(red);
-				Cell precioCompetencia=row.createCell(12);
+				Cell precioCompetencia=row.createCell(13);
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento2());
 				precioCompetencia.setCellStyle(green);
 			}else{
-				Cell precioPropio=row.createCell(11);
+				Cell precioPropio=row.createCell(12);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento2());
 				precioPropio.setCellStyle(green);
-				Cell precioCompetencia=row.createCell(12);
+				Cell precioCompetencia=row.createCell(13);
 
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento2());
 				precioCompetencia.setCellStyle(red);
 			}
 		}
-		sheet.autoSizeColumn(15);
 		sheet.autoSizeColumn(16);
+		sheet.autoSizeColumn(17);
 		FileOutputStream out = new FileOutputStream(new File(path+".xlsx"));
 		workbook.write(out);
 		workbook.close();
@@ -767,11 +798,16 @@ public class ComparativoMarpicoMundo {
 	}
 
 	public ArrayList<Stock> getStocks(String referencia){
-		client= (ResteasyClient) ClientBuilder.newBuilder().build();
-		ResteasyWebTarget target = this.client.target("https://api.cataprom.com/rest/stock/"+referencia);
-		String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
-		StockResponse stocks = new Gson().fromJson(response, StockResponse.class);
-		return stocks.getResultado();
+		  client= (ResteasyClient) ClientBuilder.newBuilder().build();
+		  ResteasyWebTarget target = this.client.target("https://api.cataprom.com/rest/stock/"+referencia);
+		  String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
+		  StockResponse stocks = new Gson().fromJson(response, StockResponse.class);
+		  return stocks.getResultado();
+		// ArrayList<Stock> stock = new ArrayList<>();
+		// stock.add(new Stock(referencia, "Rojo", 1000, 1000, 2000, "2023-02-19",1000, "En Transito"));
+		// stock.add(new Stock(referencia, "Amarillo", 2000, 700, 3000, "2023-03-01",300, "En Transito"));
+		// stock.add(new Stock(referencia, "Verde", 600, 1000, 2500, "2023-02-25",2800, "En Transito"));
+		// return stock;
 		
 	}
 

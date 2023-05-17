@@ -54,7 +54,7 @@ public class ComparacionesPromopciones {
         ps.setString(1, referenciaPropio);
 		ps.setString(2, referenciaCompetencia);
 		ps.setDouble(3, descuentoPropio);
-		ps.setDouble(4, descuentoCompetencia);
+		ps.setInt(4, descuentoCompetencia.intValue());
 		ps.setDouble(5, descuentoPropio2);
 		ps.setDouble(6, descuentoCompetencia2);
 		ps.setDouble(7, numeroPrecio);
@@ -70,14 +70,14 @@ public class ComparacionesPromopciones {
 				"descuento_competencia = ?, descuento_propio2 = ?, descuento_competencia2 = ? WHERE referencia_propio = ? AND referencia_competencia = ?"+
 				" AND numero_precio = ? AND (descuento_propio != ? OR descuento_competencia != ? OR descuento_propio2 != ? OR descuento_competencia2 != ?)");
 		ps.setDouble(1, descuentoPropio);
-		ps.setDouble(2, descuentoCompetencia);
+		ps.setInt(2, descuentoCompetencia.intValue());
 		ps.setDouble(3, descuentoPropio2);
 		ps.setDouble(4, descuentoCompetencia2);
 		ps.setString(5, referenciaPropio);
 		ps.setString(6, referenciaCompetencia);
 		ps.setInt(7, numeroPrecio);
 		ps.setDouble(8, descuentoPropio);
-		ps.setDouble(9, descuentoCompetencia);
+		ps.setInt(9, descuentoCompetencia.intValue());
 		ps.setDouble(10, descuentoPropio2);
 		ps.setDouble(11, descuentoCompetencia2);
         return ps.executeUpdate();

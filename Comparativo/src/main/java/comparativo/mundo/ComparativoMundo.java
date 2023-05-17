@@ -246,12 +246,13 @@ public class ComparativoMundo {
 		row.createCell(8).setCellValue("Precio competencia");
 		row.createCell(9).setCellValue("Precio promos descuento");
 		row.createCell(10).setCellValue("Precio competencia descuento");
-		row.createCell(11).setCellValue("Precio promos descuento 2");
-		row.createCell(12).setCellValue("Precio competencia descuento 2");
-		row.createCell(13).setCellValue("Fecha");
-		row.createCell(14).setCellValue("Numero Precio");
-		row.createCell(15).setCellValue("Inventario Propio");
-		row.createCell(16).setCellValue("Inventario Competencia");
+		row.createCell(11).setCellValue("Estado");
+		row.createCell(12).setCellValue("Precio promos descuento 2");
+		row.createCell(13).setCellValue("Precio competencia descuento 2");
+		row.createCell(14).setCellValue("Fecha");
+		row.createCell(15).setCellValue("Numero Precio");
+		row.createCell(16).setCellValue("Inventario Propio");
+		row.createCell(17).setCellValue("Inventario Competencia");
 		CellStyle green = workbook.createCellStyle();
 		green.setFillForegroundColor(IndexedColors.GREEN.getIndex());
 		green.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -275,13 +276,13 @@ public class ComparativoMundo {
 			row.createCell(4).setCellValue(comparacion.getProductoCompetencia().getCodigoHijo());
 			row.createCell(5).setCellValue(comparacion.getProductoCompetencia().getDescuento());
 			row.createCell(6).setCellValue(comparacion.getProductoCompetencia().getDescuento2());
-			row.createCell(13).setCellValue(comparacion.getFechaComparacion()!=null ? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comparacion.getFechaComparacion()): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-			row.createCell(14).setCellValue(comparacion.getNumeroPrecio());
+			row.createCell(14).setCellValue(comparacion.getFechaComparacion()!=null ? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comparacion.getFechaComparacion()): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+			row.createCell(15).setCellValue(comparacion.getNumeroPrecio());
 			
-			Cell stock1 = row.createCell(15);
+			Cell stock1 = row.createCell(16);
 			stock1.setCellValue(comparacion.getProductoPropio().getStockToString());
 			stock1.setCellStyle(cellStyle);
-			Cell stock2 =row.createCell(16);
+			Cell stock2 =row.createCell(17);
 			stock2.setCellValue(comparacion.getProductoCompetencia().getStockString());
 			stock2.setCellStyle(cellStyle);
 			row.setHeight((short) -1);
@@ -308,6 +309,8 @@ public class ComparativoMundo {
 				Cell precioCompetencia=row.createCell(10);
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento());
 				precioCompetencia.setCellStyle(green);
+				Cell estado = row.createCell(11);
+				estado.setCellValue("CARO");
 			}else{
 				Cell precioPropio=row.createCell(9);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento());
@@ -315,26 +318,28 @@ public class ComparativoMundo {
 				Cell precioCompetencia=row.createCell(10);
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento());
 				precioCompetencia.setCellStyle(red);
+				Cell estado = row.createCell(11);
+				estado.setCellValue("ok");
 			}
 			if(comparacion.getProductoPropio().getPrecioDescuento2()>comparacion.getProductoCompetencia().getPrecioDescuento2()){
-				Cell precioPropio=row.createCell(11);
+				Cell precioPropio=row.createCell(12);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento2());
 				precioPropio.setCellStyle(red);
-				Cell precioCompetencia=row.createCell(12);
+				Cell precioCompetencia=row.createCell(13);
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento2());
 				precioCompetencia.setCellStyle(green);
 			}else{
-				Cell precioPropio=row.createCell(11);
+				Cell precioPropio=row.createCell(12);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento2());
 				precioPropio.setCellStyle(green);
-				Cell precioCompetencia=row.createCell(12);
+				Cell precioCompetencia=row.createCell(13);
 
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento2());
 				precioCompetencia.setCellStyle(red);
 			}
 		}
+		sheet.autoSizeColumn(14);
 		sheet.autoSizeColumn(15);
-		sheet.autoSizeColumn(16);
 		FileOutputStream out = new FileOutputStream(new File(path+".xlsx"));
 		workbook.write(out);
 		workbook.close();
@@ -667,11 +672,11 @@ public class ComparativoMundo {
 	}
 
 	public Catalogo obtenerInformacionApiCategorias() /*throws ForbiddenException, ProcessingException, UnknownHostException*/{
-		client= (ResteasyClient) ClientBuilder.newBuilder().build();
-		ResteasyWebTarget target = this.client.target("https://api.cataprom.com/rest/categorias");
-		String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
-		CategoriaResponse categorias = new Gson().fromJson(response, CategoriaResponse.class);
-		return new Catalogo(categorias.getResultado());
+		  client= (ResteasyClient) ClientBuilder.newBuilder().build();
+		  ResteasyWebTarget target = this.client.target("https://api.cataprom.com/rest/categorias");
+		  String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
+		  CategoriaResponse categorias = new Gson().fromJson(response, CategoriaResponse.class);
+		  return new Catalogo(categorias.getResultado());
 
 
 		// ArrayList<Stock> stock = new ArrayList<>();
@@ -819,12 +824,11 @@ public class ComparativoMundo {
 		productosCompetenciaCambiaron.removeAll(productosCompetenciaCambiaron);
 		for(int i=0; i<listaComparaciones.getListaComparaciones().size();i++){
 			Comparacion comp = listaComparaciones.getListaComparaciones().get(i);
-			System.out.println(comp.getProductoPropio().getReferencia());
 			Producto propio = obtenerProductoPorReferencia(comp.getProductoPropio().getReferencia());
-			System.out.println(propio);
 			ProductoCompetencia competencia = obtenerProductoCompetencia(comp.getProductoCompetencia().getCodigoHijo());
 			ArrayList<StockPromopcionesResponse> stockCompetencia = competenciaPersistence.getStockInformation(competencia.getCodigoPadre(), catalogoCompetencia);
 			competencia.processStock(stockCompetencia);
+			if(competencia.getDescuento()==0)competencia.setDescuento(comp.getProductoCompetencia().getDescuento());
 			
 			ArrayList<Stock> stockPropio = getStocks(comp.getProductoPropio().getReferencia());
 			propioPersistence.deleteStockProducto(propio.getReferencia());

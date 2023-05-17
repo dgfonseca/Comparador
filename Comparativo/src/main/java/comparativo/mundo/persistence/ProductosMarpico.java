@@ -1,8 +1,9 @@
 package comparativo.mundo.persistence;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import comparativo.mundo.response.MaterialesMarpico;
 
@@ -97,11 +98,8 @@ public class ProductosMarpico {
     }
 
     public static double round(double value) {
-	
-		BigDecimal bd = BigDecimal.valueOf(value);
-		bd = bd.setScale(2, RoundingMode.HALF_UP);
-		return bd.doubleValue();
-	}
+        return Math.ceil(value);
+    }
 
     public String toString(){
         return this.familia +"  ---  "+this.descripcion_comercial;
@@ -131,15 +129,37 @@ public class ProductosMarpico {
         return precios;
     }
 
-    public void setPrecioDeMateriales(int indice){
-        this.precio=materiales.get(indice).getPrecio();
+    public Map<Integer,Double> getMaterialPrecios(){
+        Map<Integer,Double> precios = new HashMap<>();
+        for (int i = 0; i < materiales.size(); i++) {
+            if(!precios.containsValue(materiales.get(i).getPrecio())){
+                precios.put(materiales.get(i).getCodigo(),materiales.get(i).getPrecio());
+            }
+        }
+        return precios;
+    }
+
+    public void setPrecioDeMaterial(int codigo){
+        for (MaterialesMarpico materialesMarpico : materiales) {
+            if(materialesMarpico.getCodigo()==codigo){
+                System.out.println("Actualizar Comparaciones :::: Precio de material :::: Precio Anterior: "+this.precio+" Precio Nuevo: "+materialesMarpico.getPrecio());
+                this.precio=materialesMarpico.getPrecio();
+                if(materialesMarpico.getDescuento()!=0){
+                    this.descuento1=materialesMarpico.getDescuento();
+                }
+                if(this.descuento1==0){
+                    this.descuento2=0;
+                }
+                break;
+            }
+        }
     }
 
     public String getStockToString(){
         String respuesta="";
         for (int i = 0; i < materiales.size(); i++) {
             MaterialesMarpico material = materiales.get(i);
-            respuesta+="Codigo: "+material.getCodigo()+", Color: "+material.getColor_nombre()+", Inventario: "+material.getInventario()+ " "+material.getStockTransito()+"\n";
+            respuesta+="Color: "+material.getColor_nombre()+", Inventario: "+material.getInventario()+ " "+material.getStockTransito()+"\n";
         }
         return respuesta;
     }

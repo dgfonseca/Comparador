@@ -67,8 +67,8 @@ public class CatalogoMarpicoPersistence {
 
     public int insertMaterialesMarpico(MaterialesMarpico pMaterial, String pFamilia) throws SQLException {
         PreparedStatement ps3 = connection.prepareStatement(
-                "INSERT INTO materiales_marpico(identificador, fk_familia, color_nombre,precio,descuento,inventario) " +
-                        "VALUES(?,?,?,?,?,?) ON CONFLICT(identificador) DO UPDATE SET precio=? ,descuento=? ,inventario=?");
+                "INSERT INTO materiales_marpico(identificador, fk_familia, color_nombre,precio,descuento,inventario,variedad) " +
+                        "VALUES(?,?,?,?,?,?,?) ON CONFLICT(identificador) DO UPDATE SET precio=? ,descuento=? ,inventario=?");
 
         ps3.setInt(1, pMaterial.getCodigo());
         ps3.setString(2, pFamilia);
@@ -76,9 +76,10 @@ public class CatalogoMarpicoPersistence {
         ps3.setDouble(4, pMaterial.getPrecio());
         ps3.setDouble(5, pMaterial.getDescuento());
         ps3.setDouble(6, pMaterial.getInventario());
-        ps3.setDouble(7, pMaterial.getPrecio());
-        ps3.setDouble(8, pMaterial.getDescuento());
-        ps3.setDouble(9, pMaterial.getInventario());
+        ps3.setString(7, pMaterial.getVariedad());
+        ps3.setDouble(8, pMaterial.getPrecio());
+        ps3.setDouble(9, pMaterial.getDescuento());
+        ps3.setDouble(10, pMaterial.getInventario());
         return ps3.executeUpdate();
     }
 
@@ -181,7 +182,7 @@ public class CatalogoMarpicoPersistence {
     }
 
     public ResultSet getMateriales(String familia)throws SQLException{
-        PreparedStatement ps=connection.prepareStatement("SELECT mt.identificador, mt.color_nombre,mt.precio, mt.descuento, mt.inventario "+
+        PreparedStatement ps=connection.prepareStatement("SELECT mt.identificador, mt.color_nombre,mt.precio, mt.descuento, mt.inventario, mt.variedad "+
 			"FROM materiales_marpico as mt WHERE mt.fk_familia = ?");
 		ps.setString(1, familia);
         return ps.executeQuery();

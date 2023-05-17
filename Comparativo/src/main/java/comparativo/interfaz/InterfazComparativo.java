@@ -349,7 +349,7 @@ public class InterfazComparativo extends JFrame{
         }
         refrescarComparacionSeleccionada();
     }
-    public void crearComparacion(int numeroPrecio){
+    public void crearComparacion(int numeroPrecio,int numeroMaterial){
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         java.util.Date date = new java.util.Date();
         if(productoPropioSeleccionado!=null && productoCompetenciaSeleccionado!=null){
@@ -372,7 +372,7 @@ public class InterfazComparativo extends JFrame{
             }
         }else if(productoMarpicoSeleccionado!=null && productoPropioSeleccionado!=null){
             try {
-                ComparacionMarpico rta = comparativoMarpico.crearComparacion(productoPropioSeleccionado, productoMarpicoSeleccionado, formatter.format(date), numeroPrecio);
+                ComparacionMarpico rta = comparativoMarpico.crearComparacion(productoPropioSeleccionado, productoMarpicoSeleccionado, formatter.format(date), numeroPrecio,numeroMaterial);
                 if(rta==null){
                     JOptionPane.showMessageDialog(new JFrame(), "Ya existe una comparacion con dichos productos", "Advertencia",
             JOptionPane.WARNING_MESSAGE);
