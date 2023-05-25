@@ -825,7 +825,9 @@ public class ComparativoMundo {
 		for(int i=0; i<listaComparaciones.getListaComparaciones().size();i++){
 			Comparacion comp = listaComparaciones.getListaComparaciones().get(i);
 			Producto propio = obtenerProductoPorReferencia(comp.getProductoPropio().getReferencia());
+			propio = propio==null?comp.getProductoPropio():propio;
 			ProductoCompetencia competencia = obtenerProductoCompetencia(comp.getProductoCompetencia().getCodigoHijo());
+			competencia = competencia==null?comp.getProductoCompetencia():competencia;
 			ArrayList<StockPromopcionesResponse> stockCompetencia = competenciaPersistence.getStockInformation(competencia.getCodigoPadre(), catalogoCompetencia);
 			competencia.processStock(stockCompetencia);
 			if(competencia.getDescuento()==0)competencia.setDescuento(comp.getProductoCompetencia().getDescuento());
