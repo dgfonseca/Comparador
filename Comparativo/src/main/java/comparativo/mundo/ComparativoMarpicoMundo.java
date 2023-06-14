@@ -544,7 +544,7 @@ public class ComparativoMarpicoMundo {
 	                descuento=materialesMarpico.getDescuento();
 	            }
 	        }
-	        System.out.println("Actualizar Comparaciones :::: "+productoCompetencia.getFamilia()+" :::: Menor Precio :::: Precio Nuevo: "+productoCompetencia.getPrecio()+" Precio Anterior: "+ precio);
+	        System.out.println("Crear Comparacion 3 | Actualizar Comparaciones :::: "+productoCompetencia.getFamilia()+" :::: Menor Precio :::: Precio Nuevo: "+productoCompetencia.getPrecio()+" Precio Anterior: "+ precio);
 	        productoCompetencia.setDescuento1(descuento);
 	    }
 		return productoCompetencia;
@@ -552,9 +552,15 @@ public class ComparativoMarpicoMundo {
 
 	public ComparacionMarpico crearComparacion(Producto productoPropio, ProductosMarpico productoCompetencia,
 			String fecha, int pPrecio,int numeroMaterial) throws SQLException {
+		System.out.println("Crear Comparacion 1 | Ref Propio: "+productoPropio.getReferencia() + "Ref Competencia: " + productoCompetencia.getFamilia()
+		+ "Numero Material: "+numeroMaterial+" Numero precio: "+ pPrecio);
 		if(numeroMaterial!=-1){
+			System.out.println("Crear Comparacion 2 | Ref Propio: "+productoPropio.getReferencia() + "Ref Competencia: " + productoCompetencia.getFamilia()
+			+ "Numero material distinto a -1, estableciendo precio");
 			productoCompetencia.setPrecioDeMaterial(numeroMaterial);
 		}else{
+			System.out.println("Crear Comparacion 2 | Ref Propio: "+productoPropio.getReferencia() + "Ref Competencia: " + productoCompetencia.getFamilia()
+			+ "Numero material igual a -1, buscando precio menor");
 			setMenorPrecio(productoCompetencia);
 			productoCompetencia.setPrecioDeMaterial(numeroMaterial);
 		}
@@ -562,6 +568,8 @@ public class ComparativoMarpicoMundo {
 		CatalogoCatalogosPromocionales propioPersistence = new CatalogoCatalogosPromocionales(
 				this.connection.getConnection());
 
+		
+		System.out.println("Crear Comparacion 4 | Insertando Ref Propio: "+productoPropio.getReferencia());
 		propioPersistence.insertProducto(productoPropio.getReferencia(), productoPropio.getNombre(),
 				productoPropio.getPrecio1(), productoPropio.getPrecio2(), productoPropio.getPrecio3(),
 				productoPropio.getPrecio4(), productoPropio.getPrecio5());
@@ -569,11 +577,15 @@ public class ComparativoMarpicoMundo {
 		propioPersistence.deleteStockProducto(productoPropio.getReferencia());
 		ArrayList<Stock> stocks = getStocks(productoPropio.getReferencia());
 		productoPropio.setStock(stocks);
+		System.out.println("Crear Comparacion 5 | Insertando stock Propio: "+productoPropio.getReferencia());
 		for (int i = 0; i < stocks.size(); i++) {
 			propioPersistence.insertStockProducto(stocks.get(i));
 		}
+
+		System.out.println("Crear Comparacion 6 | Insertando Ref Marpico: "+productoCompetencia.getFamilia());
 		marpicoPersistence.insertProductoMarpico(productoCompetencia);
 
+		System.out.println("Crear Comparacion 7 | Insertando stock Marpico: "+productoCompetencia.getFamilia());
 		for (int i = 0; i < productoCompetencia.getMateriales().size(); i++) {
 			marpicoPersistence.insertMaterialesMarpico(productoCompetencia.getMateriales().get(i),
 					productoCompetencia.getFamilia());
@@ -597,6 +609,9 @@ public class ComparativoMarpicoMundo {
 		if (pPrecio == 5) {
 			precioPropio = productoPropio.getPrecio5();
 		}
+
+		System.out.println("Crear Comparacion 8 | Insertando comparacion Ref Propio: "+productoPropio.getReferencia() + "Ref Competencia: " + productoCompetencia.getFamilia()
+		+ "Numero Material: "+numeroMaterial+" Numero precio: "+ pPrecio);
 		marpicoPersistence.insertComparacion(productoPropio, productoCompetencia, pPrecio, numeroMaterial);
 
 		marpicoPersistence.insertHistoricoComparacion(productoPropio, productoCompetencia, pPrecio, numeroMaterial, precioPropio);

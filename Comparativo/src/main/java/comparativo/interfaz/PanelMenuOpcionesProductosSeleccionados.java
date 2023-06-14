@@ -193,6 +193,10 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
                     dialog.setLocationRelativeTo(null);
                     dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
                     dialog.setVisible(true);
+                }else{
+                    interfaz.crearComparacion(numeroPrecio,numeroMaterial);
+                            numeroMaterial=-1;
+                            numeroPrecio=1;
                 }
             }
             else{
