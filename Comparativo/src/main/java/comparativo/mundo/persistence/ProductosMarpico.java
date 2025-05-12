@@ -94,7 +94,7 @@ public class ProductosMarpico {
     }
 
     public double getPrecioDescuento2(){
-		return round(precio * (1 - (descuento2 / 100)));
+		return round(getPrecioDescuento1() * (1 - (descuento2 / 100)));
     }
 
     public static double round(double value) {

@@ -33,6 +33,7 @@ import comparativo.mundo.model.ProductoCompetencia;
 import comparativo.mundo.persistence.ProductosMarpico;
 import jakarta.mail.MessagingException;
 import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 
 public class InterfazComparativo extends JFrame{
@@ -156,6 +157,10 @@ public class InterfazComparativo extends JFrame{
     public ProductosMarpico getProductoMarpicoSeleccionado(){
         return this.productoMarpicoSeleccionado;
     }
+    
+    public ProductoCompetencia getProductoPromopcionSeleccionado() {
+        return this.productoCompetenciaSeleccionado;
+    }
 
     public void setEsHistorico(boolean pHistorico){
         this.esHistorico=pHistorico;
@@ -277,6 +282,47 @@ public class InterfazComparativo extends JFrame{
         refrescarComparacionSeleccionada();
     }
 
+    public void actualizarTodosDescuentos(double descuentoPropio, double descuentoCompetencia, double descuentoPropio2, double descuentoCompetencia2){
+        if(esHistorico) {
+        	JOptionPane.showMessageDialog(new JFrame(), "Debe actualizar las comparaciones parametrizadas, no el historico", "Advertencia",
+                    JOptionPane.WARNING_MESSAGE);
+        }
+        else{
+            boolean rta=false;
+            if(this.comparador.equalsIgnoreCase(PROMOPCIONES)){
+                try {
+                    rta = comparativo.actualizarTodosDescuentosComparacion(descuentoPropio, descuentoCompetencia,descuentoPropio2, descuentoCompetencia2, estaConectadoBaseDeDatos);
+                } catch (SQLException e) 
+                {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(new JFrame(), "Error de conexion con la base de datos", "ERROR",
+                    JOptionPane.ERROR_MESSAGE);
+                }
+            }else if(this.comparador.equalsIgnoreCase(MARPICO)){
+                try {
+                    rta = comparativoMarpico.actualizarTodosDescuentosComparacion(descuentoPropio, descuentoCompetencia,descuentoPropio2, descuentoCompetencia2, estaConectadoBaseDeDatos);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(new JFrame(), "Error de conexion con la base de datos", "ERROR",
+                    JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            if(rta){
+                JOptionPane.showMessageDialog(new JFrame(), "Actualizado correctamente", "Informacion",
+                JOptionPane.INFORMATION_MESSAGE);
+            }else{
+                JOptionPane.showMessageDialog(new JFrame(), "No se actualizo en la base de datos", "Advertencia",
+                JOptionPane.WARNING_MESSAGE);
+            }
+            if(esHistorico){
+                obtenerHistoricoComparaciones();
+            }else{
+                refrescarListaComparaciones();
+            }
+        }
+        refrescarComparacionSeleccionada();
+    }
+
 
     public void obtenerComparacionesGuardadas(){
         try{
@@ -318,7 +364,7 @@ public class InterfazComparativo extends JFrame{
                     String texto = comparativoMarpico.enviarEmail(email);
                     JOptionPane.showMessageDialog(new JFrame(), texto, "INFO", JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (UnknownHostException e) {
+        } catch (UnknownHostException|InterruptedException e) {
             JOptionPane.showMessageDialog(new JFrame(), "Error al comunicarse con el api, por favor verificar su conexion o el acceso al api", "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         } catch (SQLException e) {
@@ -353,6 +399,7 @@ public class InterfazComparativo extends JFrame{
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         java.util.Date date = new java.util.Date();
         if(productoPropioSeleccionado!=null && productoCompetenciaSeleccionado!=null){
+            System.out.println("Entrooo 1-1");
             try {
                 Comparacion rta = comparativo.crearComparacion(productoPropioSeleccionado, productoCompetenciaSeleccionado, formatter.format(date),estaConectadoBaseDeDatos, numeroPrecio);
                 if(rta==null){
@@ -365,7 +412,7 @@ public class InterfazComparativo extends JFrame{
                     JOptionPane.showMessageDialog(new JFrame(), "Comparacion agregada exitosamente", "Informacion",
             JOptionPane.INFORMATION_MESSAGE);
                 }
-            } catch (SQLException | ParseException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(new JFrame(), "Error al crear comparacion", "Error",
             JOptionPane.ERROR_MESSAGE);
@@ -485,9 +532,9 @@ public class InterfazComparativo extends JFrame{
                 return true;
             }
         }
-        catch (ForbiddenException e){
+        catch (ForbiddenException | NotFoundException e){
             JOptionPane.showMessageDialog(new JFrame(), "Error al comunicarse con el api, por favor verificar su conexion o el acceso al api", "Error", JOptionPane.ERROR_MESSAGE);
-            return false;
+            return true;
         } catch(ProcessingException | UnknownHostException e){
             System.out.println(e);
             JOptionPane.showMessageDialog(new JFrame(), "Verifique su conexion a internet", "Error", JOptionPane.ERROR_MESSAGE);

@@ -57,6 +57,10 @@ public class Comparacion {
 		this.productoCompetencia.setDescuento(pDescuento);
 	}
 	
+	public int compareTo(String referencia) {
+	    return this.productoPropio.getReferencia().compareTo(referencia);
+	}
+	
 	
 
 }

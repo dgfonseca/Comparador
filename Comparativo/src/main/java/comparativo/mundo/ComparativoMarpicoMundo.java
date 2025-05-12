@@ -26,11 +26,14 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
+
+import comparativo.mundo.model.Comparacion;
 import comparativo.mundo.model.ComparacionMarpico;
 import comparativo.mundo.model.Producto;
 import comparativo.mundo.model.Stock;
 import comparativo.mundo.persistence.CatalogoCatalogosPromocionales;
 import comparativo.mundo.persistence.CatalogoMarpicoPersistence;
+import comparativo.mundo.persistence.ComparacionesPromopciones;
 import comparativo.mundo.persistence.DataBaseConection;
 import comparativo.mundo.persistence.ProductosMarpico;
 import comparativo.mundo.response.CatalogoMarpico;
@@ -110,16 +113,15 @@ public class ComparativoMarpicoMundo {
 			}
 		}
 		if(this.productosCompetenciaCambiaron.size()>0||this.productosCambiaron.size()>0){
-			Properties prop = new Properties();
-			prop.put("mail.smtp.auth", true);
+		    Properties prop = new Properties();
+			prop.put("mail.smtp.auth", "true");
 			prop.put("mail.smtp.starttls.enable", "true");
-			prop.put("mail.smtp.host", "smtp-mail.outlook.com");
+			prop.put("mail.smtp.host", "smtp-relay.brevo.com");
 			prop.put("mail.smtp.port", "587");
-			prop.put("mail.smtp.ssl.trust", "smtp-mail.outlook.com");
 			Session session = Session.getInstance(prop, new Authenticator() {
 				@Override
 				protected PasswordAuthentication getPasswordAuthentication() {
-					return new PasswordAuthentication("comparadorcataprom@outlook.com", "cataprom2023");
+					return new PasswordAuthentication("7d57c4001@smtp-brevo.com", "V9wSpgJI6K8RHXhx");
 				}
 			});
 			Message message = new MimeMessage(session);
@@ -186,7 +188,7 @@ public class ComparativoMarpicoMundo {
 	}
 
 	public void actualizarComparaciones() throws SQLException,
-	UnknownHostException{
+	UnknownHostException, InterruptedException{
 		ComparativoMundo mundo = new ComparativoMundo();
 		productosCambiaron.clear();
 		productosCompetenciaCambiaron.clear();
@@ -194,6 +196,7 @@ public class ComparativoMarpicoMundo {
 		CatalogoMarpicoPersistence marpicoPersistence = new CatalogoMarpicoPersistence(this.connection.getConnection());
 		
 		for(int i = 0; i< comparaciones.size(); i++){
+		    Thread.sleep(1000);
 			ComparacionMarpico comparacion = comparaciones.get(i);
 
 			System.out.println("Actualizando Comparacion :::: Producto "+i+" De "+comparaciones.size()+" :::: Producto propio: "+comparacion.getProductoPropio().getReferencia() + " Producto Competencia: "+comparacion.getProductoCompetencia().getFamilia());
@@ -201,7 +204,8 @@ public class ComparativoMarpicoMundo {
 			 Producto productoPropio =
 			 mundo.obtenerProductoPorReferencia(comparacion.getProductoPropio().getReferencia());
 	         productoPropio = productoPropio == null ? comparacion.getProductoPropio():productoPropio;
-
+			productoPropio.setDescuento(comparacion.getProductoPropio().getDescuento());
+			productoPropio.setDescuento2(comparacion.getProductoPropio().getDescuento2());
 			// Producto productoPropio = comparacion.getProductoPropio();
 			double precio=productoPropio.getPrecio1();;
 			if(comparacion.getNumeroPrecio()==2){
@@ -225,6 +229,10 @@ public class ComparativoMarpicoMundo {
 			 }
 
 			ProductosMarpico productoCompetencia = buscarProductoPorFamilia(comparacion.getProductoCompetencia().getFamilia());
+			productoCompetencia= productoCompetencia==null?comparacion.getProductoCompetencia():productoCompetencia;
+		
+			productoCompetencia.setDescuento1(comparacion.getProductoCompetencia().getDescuento1());
+			productoCompetencia.setDescuento2(comparacion.getProductoCompetencia().getDescuento2());
 			productoCompetencia = productoCompetencia == null ? comparacion.getProductoCompetencia():productoCompetencia;
 			if(comparacion.getNumeroPrecioMarpico()!=-1 && comparacion.getNumeroPrecioMarpico() != 1){
 				productoCompetencia.setPrecioDeMaterial(comparacion.getNumeroPrecioMarpico());
@@ -254,6 +262,45 @@ public class ComparativoMarpicoMundo {
 			}
 		}
 		obtenerComparacionesBaseDeDatos();
+	}
+
+	public boolean actualizarTodosDescuentosComparacion(double descuentoPropio, double descuentoCompetencia, double descuentoPropio2, double descuentoCompetencia2, boolean estaConectado) throws SQLException{
+		if(estaConectado){
+
+			CatalogoMarpicoPersistence comparacionPersistence = new CatalogoMarpicoPersistence(this.connection.getConnection());
+				
+			int response = comparacionPersistence.updateTodosDescuentosComparacion(descuentoPropio, descuentoCompetencia, descuentoPropio2, descuentoCompetencia2);
+				
+			this.obtenerComparacionesBaseDeDatos();
+			for (ComparacionMarpico comparacion : this.comparaciones) {
+				int numeroPrecio=comparacion.getNumeroPrecio();
+				double precio=comparacion.getProductoPropio().getPrecio1();
+				if(numeroPrecio==1){
+					precio=comparacion.getProductoPropio().getPrecio1();
+				}
+				if(numeroPrecio==2){
+					precio=comparacion.getProductoPropio().getPrecio2();
+				}
+				if(numeroPrecio==3){
+					precio=comparacion.getProductoPropio().getPrecio3();
+				}
+				if(numeroPrecio==4){
+					precio=comparacion.getProductoPropio().getPrecio4();
+				}
+				if(numeroPrecio==5){
+					precio=comparacion.getProductoPropio().getPrecio5();
+				}
+				comparacionPersistence.insertHistoricoComparacion(comparacion.getProductoPropio(), comparacion.getProductoCompetencia(), comparacion.getNumeroPrecio(), comparacion.getNumeroPrecioMarpico(),precio);
+			}
+			if(response>0){
+				return true;
+			}else{
+				return false;
+			}
+		}
+		else{
+			return false;
+		}
 	}
 
 	public ArrayList<Producto> getProductosPropiosCambiaron(){
@@ -625,7 +672,7 @@ public class ComparativoMarpicoMundo {
 
 	public CatalogoMarpico cargarCatalogoMarpico() {
 		client = (ResteasyClient) ClientBuilder.newClient();
-		ResteasyWebTarget target = client.target("https://marpicoprod.azurewebsites.net/api/inventarios/materialesAPI");
+		ResteasyWebTarget target = client.target("https://apipromocionales.marpico.co/api/inventarios/materialesAPI");
 		String response = target.request(MediaType.APPLICATION_JSON)
 				.header("Authorization", "Api-Key ijCDQW5tFfEQPjqlZVfqyrT0grs938KRPOTictTvB6EKzXPProgJpTnOFcR3HO8R")
 				.get(String.class);
@@ -715,10 +762,11 @@ public class ComparativoMarpicoMundo {
 		row.createCell(11).setCellValue("Estado");
 		row.createCell(12).setCellValue("Precio promos descuento 2");
 		row.createCell(13).setCellValue("Precio competencia descuento 2");
-		row.createCell(14).setCellValue("Fecha");
-		row.createCell(15).setCellValue("Numero Precio");
-		row.createCell(16).setCellValue("Inventario Propio");
-		row.createCell(17).setCellValue("Inventario Competencia");
+	    row.createCell(14).setCellValue("Estado");
+		row.createCell(15).setCellValue("Fecha");
+		row.createCell(16).setCellValue("Numero Precio");
+		row.createCell(17).setCellValue("Inventario Propio");
+		row.createCell(18).setCellValue("Inventario Competencia");
 		CellStyle green = workbook.createCellStyle();
 		green.setFillForegroundColor(IndexedColors.GREEN.getIndex());
 		green.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -742,13 +790,13 @@ public class ComparativoMarpicoMundo {
 			row.createCell(4).setCellValue(comparacion.getProductoCompetencia().getFamilia());
 			row.createCell(5).setCellValue(comparacion.getProductoCompetencia().getDescuento1());
 			row.createCell(6).setCellValue(comparacion.getProductoCompetencia().getDescuento2());
-			row.createCell(14).setCellValue(comparacion.getFechaComparacion()!=null ? comparacion.getFechaComparacion(): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-			row.createCell(15).setCellValue(comparacion.getNumeroPrecio());
+			row.createCell(15).setCellValue(comparacion.getFechaComparacion()!=null ? comparacion.getFechaComparacion(): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+			row.createCell(16).setCellValue(comparacion.getNumeroPrecio());
 			
-			Cell stock1 = row.createCell(16);
+			Cell stock1 = row.createCell(17);
 			stock1.setCellValue(comparacion.getProductoPropio().getStockToString());
 			stock1.setCellStyle(cellStyle);
-			Cell stock2 =row.createCell(17);
+			Cell stock2 =row.createCell(18);
 			stock2.setCellValue(comparacion.getProductoCompetencia().getStockToString());
 			stock2.setCellStyle(cellStyle);
 			row.setHeight((short) -1);
@@ -794,18 +842,21 @@ public class ComparativoMarpicoMundo {
 				Cell precioCompetencia=row.createCell(13);
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento2());
 				precioCompetencia.setCellStyle(green);
+				Cell estado = row.createCell(14);
+				estado.setCellValue("CARO");
 			}else{
 				Cell precioPropio=row.createCell(12);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento2());
 				precioPropio.setCellStyle(green);
 				Cell precioCompetencia=row.createCell(13);
-
+				Cell estado = row.createCell(14);
+                estado.setCellValue("ok");
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento2());
 				precioCompetencia.setCellStyle(red);
 			}
 		}
-		sheet.autoSizeColumn(16);
 		sheet.autoSizeColumn(17);
+		sheet.autoSizeColumn(18);
 		FileOutputStream out = new FileOutputStream(new File(path+".xlsx"));
 		workbook.write(out);
 		workbook.close();
@@ -814,7 +865,7 @@ public class ComparativoMarpicoMundo {
 
 	public ArrayList<Stock> getStocks(String referencia){
 		  client= (ResteasyClient) ClientBuilder.newBuilder().build();
-		  ResteasyWebTarget target = this.client.target("https://api.cataprom.com/rest/stock/"+referencia);
+		  ResteasyWebTarget target = this.client.target("http://api.cataprom.com/rest/stock/"+referencia);
 		  String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
 		  StockResponse stocks = new Gson().fromJson(response, StockResponse.class);
 		  return stocks.getResultado();
@@ -827,12 +878,16 @@ public class ComparativoMarpicoMundo {
 	}
 
 	public ProductosMarpico buscarProductoPorFamilia(String pFamilia){
-        ProductosMarpico rta = null;
-        client=(ResteasyClient) ClientBuilder.newClient();
-        ResteasyWebTarget target = client.target("https://marpicoprod.azurewebsites.net/api/inventarios/materialesAPIByProducto?producto="+pFamilia);
-		String response = target.request(MediaType.APPLICATION_JSON).header("Authorization", "Api-Key ijCDQW5tFfEQPjqlZVfqyrT0grs938KRPOTictTvB6EKzXPProgJpTnOFcR3HO8R").get(String.class);
-        response = response.substring(1, response.length() - 1);
-        rta = new Gson().fromJson(response, ProductosMarpico.class);
+	    ProductosMarpico rta = null;
+	    try {
+	        client=(ResteasyClient) ClientBuilder.newClient();
+	        ResteasyWebTarget target = client.target("https://apipromocionales.marpico.co/api/inventarios/materialesAPIByProducto?producto="+pFamilia);
+	        String response = target.request(MediaType.APPLICATION_JSON).header("Authorization", "Api-Key ijCDQW5tFfEQPjqlZVfqyrT0grs938KRPOTictTvB6EKzXPProgJpTnOFcR3HO8R").get(String.class);
+	        response = response.substring(1, response.length() - 1);
+	        rta = new Gson().fromJson(response, ProductosMarpico.class);
+	    }catch(Exception e) {
+	        System.out.println(e.getMessage()+"----Familia :"+pFamilia);
+	    }
         return rta;
     }
 }

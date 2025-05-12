@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ComparacionesPromopciones {
 
@@ -65,6 +67,65 @@ public class ComparacionesPromopciones {
         return ps.executeUpdate();
     }
 
+
+	public int updateTodosDescuentosComparacion(Double descuentoPropio, Double descuentoCompetencia, Double descuentoPropio2, Double descuentoCompetencia2) throws SQLException {
+    StringBuilder queryBuilder = new StringBuilder("UPDATE comparaciones SET ");
+    List<Object> parameters = new ArrayList<>();
+
+    if (descuentoPropio != -1) {
+        queryBuilder.append("descuento_propio = ?, ");
+        parameters.add(descuentoPropio);
+    }
+    if (descuentoCompetencia != -1) {
+        queryBuilder.append("descuento_competencia = ?, ");
+        parameters.add(descuentoCompetencia.intValue());
+    }
+    if (descuentoPropio2 != -1) {
+        queryBuilder.append("descuento_propio2 = ?, ");
+        parameters.add(descuentoPropio2);
+    }
+    if (descuentoCompetencia2 != -1) {
+        queryBuilder.append("descuento_competencia2 = ?, ");
+        parameters.add(descuentoCompetencia2.intValue());
+    }
+
+    queryBuilder.delete(queryBuilder.length() - 2, queryBuilder.length());
+
+    queryBuilder.append(" WHERE ");
+    if (descuentoPropio != -1) {
+        queryBuilder.append("descuento_propio != ? OR ");
+        parameters.add(descuentoPropio);
+    }
+    if (descuentoCompetencia != -1) {
+        queryBuilder.append("descuento_competencia != ? OR ");
+        parameters.add(descuentoCompetencia.intValue());
+    }
+    if (descuentoPropio2 != -1) {
+        queryBuilder.append("descuento_propio2 != ? OR ");
+        parameters.add(descuentoPropio2);
+    }
+    if (descuentoCompetencia2 != -1) {
+        queryBuilder.append("descuento_competencia2 != ? OR ");
+        parameters.add(descuentoCompetencia2.intValue());
+    }
+
+    queryBuilder.delete(queryBuilder.length() - 4, queryBuilder.length());
+
+    PreparedStatement ps = connection.prepareStatement(queryBuilder.toString());
+
+    for (int i = 0; i < parameters.size(); i++) {
+        Object parameter = parameters.get(i);
+        if (parameter instanceof Double) {
+            ps.setDouble(i + 1, (Double) parameter);
+        } else if (parameter instanceof Integer) {
+            ps.setInt(i + 1, (Integer) parameter);
+        }
+    }
+
+    System.out.println("Update:" + ps);
+    return ps.executeUpdate();
+}
+
     public int updateDescuentoComparacion(Double descuentoPropio, Double descuentoCompetencia, Double descuentoPropio2, Double descuentoCompetencia2, String referenciaPropio, String referenciaCompetencia, int numeroPrecio) throws SQLException{
         PreparedStatement ps = connection.prepareStatement("UPDATE comparaciones SET descuento_propio = ? , "+
 				"descuento_competencia = ?, descuento_propio2 = ?, descuento_competencia2 = ? WHERE referencia_propio = ? AND referencia_competencia = ?"+
@@ -80,6 +141,7 @@ public class ComparacionesPromopciones {
 		ps.setInt(9, descuentoCompetencia.intValue());
 		ps.setDouble(10, descuentoPropio2);
 		ps.setDouble(11, descuentoCompetencia2);
+		System.out.println("Update:"+ps);
         return ps.executeUpdate();
     }
 

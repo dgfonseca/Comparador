@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -76,6 +77,7 @@ public class PanelListaComparaciones extends JPanel{
         tabla.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         tabla.setAutoCreateRowSorter(true);
         tabla.getTableHeader().setBackground(Color.lightGray);
+        tabla.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tabla.addMouseListener(new MouseAdapter(){
             
             public void mouseClicked(MouseEvent event) {
@@ -194,8 +196,9 @@ public class PanelListaComparaciones extends JPanel{
             this.setBorder(BorderFactory.createTitledBorder("Comparaciones"));
         }
         if(interfaz.getComparador().equalsIgnoreCase("Promopciones")){
+            
             for(int i =0; i<lista.getListaComparaciones().size();i++){
-                comp=lista.getListaComparaciones().get(i);
+                comp=lista.getSortedList().get(i);
                 modeloTabla.addRow(new Object[]{comp.getProductoPropio().getNombre(), comp.getProductoPropio().getReferencia(), comp.getProductoPropio().getDescuento(),comp.getProductoPropio().getDescuento2(),
                     comp.getProductoCompetencia().getCodigoHijo(),comp.getProductoCompetencia().getDescuento(),comp.getProductoCompetencia().getDescuento2(),comp.getProductoPropio().getPrecio1(), comp.getProductoCompetencia().getPrecioBase(),
                     comp.getProductoPropio().getPrecioDescuento(),comp.getProductoCompetencia().getPrecioDescuento(),comp.getProductoPropio().getPrecioDescuento2(),comp.getProductoCompetencia().getPrecioDescuento2()
@@ -206,8 +209,10 @@ public class PanelListaComparaciones extends JPanel{
             rowSorter = new TableRowSorter<>(tabla.getModel());
             tabla.setRowSorter(rowSorter);
         }else if(interfaz.getComparador().equalsIgnoreCase("Marpico")){
-            for(int i =0; i<listaMarpico.size();i++){
-                compMarpico=listaMarpico.get(i);
+            ArrayList<ComparacionMarpico> sorted = quickSort(listaMarpico);
+
+            for(int i =0; i<sorted.size();i++){
+                compMarpico=sorted.get(i);
                 modeloTabla.addRow(new Object[]{compMarpico.getProductoPropio().getNombre(), compMarpico.getProductoPropio().getReferencia(), compMarpico.getProductoPropio().getDescuento(),compMarpico.getProductoPropio().getDescuento2(),
                     compMarpico.getProductoCompetencia().getFamilia(),compMarpico.getProductoCompetencia().getDescuento1(),compMarpico.getProductoCompetencia().getDescuento2(),compMarpico.getProductoPropio().getPrecio1(), compMarpico.getProductoCompetencia().getPrecio(),
                     compMarpico.getProductoPropio().getPrecioDescuento(),compMarpico.getProductoCompetencia().getPrecioDescuento1(),compMarpico.getProductoPropio().getPrecioDescuento2(),compMarpico.getProductoCompetencia().getPrecioDescuento2()
@@ -218,6 +223,33 @@ public class PanelListaComparaciones extends JPanel{
             rowSorter = new TableRowSorter<>(tabla.getModel());
             tabla.setRowSorter(rowSorter);
         }
+    }
+    
+    public ArrayList<ComparacionMarpico> quickSort(ArrayList<ComparacionMarpico> comparacion) {
+        if(!comparacion.isEmpty()) {
+            ArrayList<ComparacionMarpico> sorted;
+            ArrayList<ComparacionMarpico> smaller=new ArrayList<>();
+            ArrayList<ComparacionMarpico> greater=new ArrayList<>();
+            ComparacionMarpico pivot = comparacion.get(0);
+            int i;
+            ComparacionMarpico j;
+            for(i=1;i<comparacion.size();i++) {
+                j=comparacion.get(i);
+                if(j.compareTo(pivot.getProductoPropio().getReferencia())<0) {
+                    smaller.add(j);
+                }else {
+                    greater.add(j);
+                }
+            }
+            smaller=quickSort(smaller);
+            greater=quickSort(greater);
+            smaller.add(pivot);
+            smaller.addAll(greater);
+            sorted=smaller;
+            return sorted;
+        }
+        return comparacion;
+        
     }
 
     private JTextField createTextField() {

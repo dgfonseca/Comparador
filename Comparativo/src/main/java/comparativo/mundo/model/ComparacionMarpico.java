@@ -59,4 +59,7 @@ public class ComparacionMarpico {
     public void setNumeroPrecioMarpico(int numeroPrecio) {
         this.numeroPrecioMarpico = numeroPrecio;
     }
+    public int compareTo(String referencia) {
+        return this.productoPropio.getReferencia().compareTo(referencia);
+    }
 }

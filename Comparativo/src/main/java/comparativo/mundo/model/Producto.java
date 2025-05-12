@@ -15,6 +15,7 @@ public class Producto {
 	private double descuento;
 	private double descuento2;
 	private ArrayList<Stock> stock;
+	private boolean esNeto;
 
 	private int indicadorSubio;
 
@@ -31,6 +32,7 @@ public class Producto {
 		this.descuento2 = 0;
 		this.stock=pStock;
 		this.indicadorSubio=0;
+		this.esNeto=false;
 	}
 	public Producto(String pNombre, String pReferencia, double pPrecio, double pPrecio2, double pPrecio3, double pPrecio4, double pPrecio5, double pDescuento, double pDescuento2, ArrayList<Stock> pStock) {
 		super();
@@ -45,6 +47,7 @@ public class Producto {
 		this.descuento2 = pDescuento2;
 		this.stock=pStock;
 		this.indicadorSubio=0;
+	    this.esNeto=false;
 	}
 
 	public int getIndicadorSubio() {
@@ -165,6 +168,14 @@ public class Producto {
 
 	public void setStock(ArrayList<Stock> stock) {
 		this.stock = stock;
+	}
+	
+	public boolean getEsNeto() {
+	    return this.esNeto;
+	}
+	
+	public void setEsNeto(boolean pNeto) {
+	    this.esNeto=pNeto;
 	}
 
 	public String getStockToString(){

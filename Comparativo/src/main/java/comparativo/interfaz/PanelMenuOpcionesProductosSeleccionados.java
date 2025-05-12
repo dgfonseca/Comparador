@@ -117,6 +117,8 @@ public class PanelMenuOpcionesProductosSeleccionados extends JPanel implements A
                             numeroMaterial=-1;
                             numeroPrecio=1;
                         }
+                    }if(interfaz.getProductoPromopcionSeleccionado()!=null) {
+                        interfaz.crearComparacion(numeroPrecio, -1);
                     }
                 }
             };

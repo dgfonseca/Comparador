@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
+import comparativo.mundo.ComparativoMundo.Campos;
 import comparativo.mundo.model.Catalogo;
 import comparativo.mundo.model.Categoria;
 import comparativo.mundo.model.Comparacion;
@@ -151,16 +152,15 @@ public class ComparativoMundo {
 			}
 		}
 		if(this.productosCompetenciaCambiaron.size()>0||this.productosCambiaron.size()>0){
-			Properties prop = new Properties();
-			prop.put("mail.smtp.auth", true);
+		    Properties prop = new Properties();
+			prop.put("mail.smtp.auth", "true");
 			prop.put("mail.smtp.starttls.enable", "true");
-			prop.put("mail.smtp.host", "smtp-mail.outlook.com");
+			prop.put("mail.smtp.host", "smtp-relay.brevo.com");
 			prop.put("mail.smtp.port", "587");
-			prop.put("mail.smtp.ssl.trust", "smtp-mail.outlook.com");
 			Session session = Session.getInstance(prop, new Authenticator() {
 				@Override
 				protected PasswordAuthentication getPasswordAuthentication() {
-					return new PasswordAuthentication("comparadorcataprom@outlook.com", "cataprom2023");
+					return new PasswordAuthentication("7d57c4001@smtp-brevo.com", "V9wSpgJI6K8RHXhx");
 				}
 			});
 			Message message = new MimeMessage(session);
@@ -249,10 +249,11 @@ public class ComparativoMundo {
 		row.createCell(11).setCellValue("Estado");
 		row.createCell(12).setCellValue("Precio promos descuento 2");
 		row.createCell(13).setCellValue("Precio competencia descuento 2");
-		row.createCell(14).setCellValue("Fecha");
-		row.createCell(15).setCellValue("Numero Precio");
-		row.createCell(16).setCellValue("Inventario Propio");
-		row.createCell(17).setCellValue("Inventario Competencia");
+	    row.createCell(14).setCellValue("Estado");
+		row.createCell(15).setCellValue("Fecha");
+		row.createCell(16).setCellValue("Numero Precio");
+		row.createCell(17).setCellValue("Inventario Propio");
+		row.createCell(18).setCellValue("Inventario Competencia");
 		CellStyle green = workbook.createCellStyle();
 		green.setFillForegroundColor(IndexedColors.GREEN.getIndex());
 		green.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -276,13 +277,13 @@ public class ComparativoMundo {
 			row.createCell(4).setCellValue(comparacion.getProductoCompetencia().getCodigoHijo());
 			row.createCell(5).setCellValue(comparacion.getProductoCompetencia().getDescuento());
 			row.createCell(6).setCellValue(comparacion.getProductoCompetencia().getDescuento2());
-			row.createCell(14).setCellValue(comparacion.getFechaComparacion()!=null ? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comparacion.getFechaComparacion()): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-			row.createCell(15).setCellValue(comparacion.getNumeroPrecio());
+			row.createCell(15).setCellValue(comparacion.getFechaComparacion()!=null ? new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comparacion.getFechaComparacion()): new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+			row.createCell(16).setCellValue(comparacion.getNumeroPrecio());
 			
-			Cell stock1 = row.createCell(16);
+			Cell stock1 = row.createCell(17);
 			stock1.setCellValue(comparacion.getProductoPropio().getStockToString());
 			stock1.setCellStyle(cellStyle);
-			Cell stock2 =row.createCell(17);
+			Cell stock2 =row.createCell(18);
 			stock2.setCellValue(comparacion.getProductoCompetencia().getStockString());
 			stock2.setCellStyle(cellStyle);
 			row.setHeight((short) -1);
@@ -328,6 +329,8 @@ public class ComparativoMundo {
 				Cell precioCompetencia=row.createCell(13);
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento2());
 				precioCompetencia.setCellStyle(green);
+				Cell estado = row.createCell(14);
+                estado.setCellValue("CARO");
 			}else{
 				Cell precioPropio=row.createCell(12);
 				precioPropio.setCellValue(comparacion.getProductoPropio().getPrecioDescuento2());
@@ -336,10 +339,12 @@ public class ComparativoMundo {
 
 				precioCompetencia.setCellValue(comparacion.getProductoCompetencia().getPrecioDescuento2());
 				precioCompetencia.setCellStyle(red);
+				Cell estado = row.createCell(14);
+                estado.setCellValue("ok");
 			}
 		}
-		sheet.autoSizeColumn(14);
 		sheet.autoSizeColumn(15);
+		sheet.autoSizeColumn(16);
 		FileOutputStream out = new FileOutputStream(new File(path+".xlsx"));
 		workbook.write(out);
 		workbook.close();
@@ -434,7 +439,7 @@ public class ComparativoMundo {
 
 	public ArrayList<Stock> getStocks(String referencia){
 		client= (ResteasyClient) ClientBuilder.newBuilder().build();
-		ResteasyWebTarget target = this.client.target("https://api.cataprom.com/rest/stock/"+referencia);
+		ResteasyWebTarget target = this.client.target("http://api.cataprom.com/rest/stock/"+referencia);
 		String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
 		StockResponse stocks = new Gson().fromJson(response, StockResponse.class);
 		return stocks.getResultado();
@@ -476,6 +481,30 @@ public class ComparativoMundo {
 				
 			comparacionPersistence.updateDescuentoHistoricoComparacion(comparacion.getProductoPropio().getReferencia(), comparacion.getProductoCompetencia().getCodigoHijo(), formatter.format(date), precioPropio, comparacion.getProductoPropio().getDescuento(), comparacion.getProductoCompetencia().getPrecioBase(), comparacion.getProductoCompetencia().getDescuento(), comparacion.getProductoPropio().getDescuento2(), comparacion.getProductoCompetencia().getDescuento2(), pPrecio);
 				
+			if(response>0){
+				return true;
+			}else{
+				return false;
+			}
+		}
+		else{
+			return false;
+		}
+	}
+
+	public boolean actualizarTodosDescuentosComparacion(double descuentoPropio, double descuentoCompetencia, double descuentoPropio2, double descuentoCompetencia2, boolean estaConectado) throws SQLException{
+		if(estaConectado){
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        	java.util.Date date = new java.util.Date();
+
+			ComparacionesPromopciones comparacionPersistence = new ComparacionesPromopciones(this.connection.getConnection());
+				
+			int response = comparacionPersistence.updateTodosDescuentosComparacion(descuentoPropio, descuentoCompetencia, descuentoPropio2, descuentoCompetencia2);
+				
+			this.obtenerListaComparacionesBaseDeDatos();
+			for (Comparacion comparacion : this.listaComparaciones.getListaComparaciones()) {
+				comparacionPersistence.insertHistoricoComparacion(comparacion.getProductoPropio().getReferencia(), comparacion.getProductoCompetencia().getCodigoHijo(), formatter.format(date), comparacion.getProductoPropio().getPrecio1(), comparacion.getProductoPropio().getDescuento(), comparacion.getProductoCompetencia().getPrecioBase(), comparacion.getProductoCompetencia().getDescuento(), comparacion.getProductoPropio().getDescuento2(), comparacion.getProductoCompetencia().getDescuento2(), comparacion.getNumeroPrecio());
+			}
 			if(response>0){
 				return true;
 			}else{
@@ -673,7 +702,7 @@ public class ComparativoMundo {
 
 	public Catalogo obtenerInformacionApiCategorias() /*throws ForbiddenException, ProcessingException, UnknownHostException*/{
 		  client= (ResteasyClient) ClientBuilder.newBuilder().build();
-		  ResteasyWebTarget target = this.client.target("https://api.cataprom.com/rest/categorias");
+		  ResteasyWebTarget target = this.client.target("http://api.cataprom.com/rest/categorias");
 		  String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
 		  CategoriaResponse categorias = new Gson().fromJson(response, CategoriaResponse.class);
 		  return new Catalogo(categorias.getResultado());
@@ -717,7 +746,7 @@ public class ComparativoMundo {
 		client= (ResteasyClient) ClientBuilder.newBuilder().build();
 
 		for(int i = 0; i < catalogoPropio.getCatalogo().size() && !termino; i++){
-			ResteasyWebTarget target = client.target("https://api.cataprom.com/rest/categorias/"+catalogoPropio.getCatalogo().get(i).getId()+"/productos");
+			ResteasyWebTarget target = client.target("http://api.cataprom.com/rest/categorias/"+catalogoPropio.getCatalogo().get(i).getId()+"/productos");
 			String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
 			productos = new Gson().fromJson(response, ProductosResponse.class).getResultado();
 			for(int j = 0; j<productos.size() && !termino; j++){
@@ -737,7 +766,7 @@ public class ComparativoMundo {
 	
 	public void obtenerProductosCategoria(Categoria pCategoria){
 		if(pCategoria.getProductos()==null){
-			ResteasyWebTarget target = client.target("https://api.cataprom.com/rest/categorias/"+pCategoria.getId()+"/productos");
+			ResteasyWebTarget target = client.target("http://api.cataprom.com/rest/categorias/"+pCategoria.getId()+"/productos");
 			String response = target.request(MediaType.APPLICATION_JSON).get(String.class);
 			ProductosResponse productos = new Gson().fromJson(response, ProductosResponse.class);
 			pCategoria.setProductos(productos.getResultado());
@@ -826,6 +855,8 @@ public class ComparativoMundo {
 			Comparacion comp = listaComparaciones.getListaComparaciones().get(i);
 			Producto propio = obtenerProductoPorReferencia(comp.getProductoPropio().getReferencia());
 			propio = propio==null?comp.getProductoPropio():propio;
+			propio.setDescuento(comp.getProductoPropio().getDescuento());
+			propio.setDescuento2(comp.getProductoPropio().getDescuento2());
 			ProductoCompetencia competencia = obtenerProductoCompetencia(comp.getProductoCompetencia().getCodigoHijo());
 			competencia = competencia==null?comp.getProductoCompetencia():competencia;
 			ArrayList<StockPromopcionesResponse> stockCompetencia = competenciaPersistence.getStockInformation(competencia.getCodigoPadre(), catalogoCompetencia);

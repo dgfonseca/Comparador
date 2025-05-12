@@ -39,5 +39,34 @@ public class ListaComparaciones {
 		return respuesta;
 	}
 	
-
+	public ArrayList<Comparacion> getSortedList(){
+	    return quickSort(this.listaComparaciones);
+	}
+	
+	public ArrayList<Comparacion> quickSort(ArrayList<Comparacion> comparacion) {
+	    if(!comparacion.isEmpty()) {
+	        ArrayList<Comparacion> sorted;
+	        ArrayList<Comparacion> smaller=new ArrayList<>();
+	        ArrayList<Comparacion> greater=new ArrayList<>();
+	        Comparacion pivot = comparacion.get(0);
+	        int i;
+	        Comparacion j;
+	        for(i=1;i<comparacion.size();i++) {
+	            j=comparacion.get(i);
+	            if(j.compareTo(pivot.getProductoPropio().getReferencia())<0) {
+	                smaller.add(j);
+	            }else {
+	                greater.add(j);
+	            }
+	        }
+	        smaller=quickSort(smaller);
+	        greater=quickSort(greater);
+	        smaller.add(pivot);
+	        smaller.addAll(greater);
+	        sorted=smaller;
+	        return sorted;
+	    }
+	    return comparacion;
+	    
+	}
 }
